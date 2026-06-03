@@ -26,8 +26,23 @@ The project operates in a 100% Dockerized multi-stage environment (DEBUG and REL
 ## Development Guide
 
 ### Starting the Application
-A `Makefile` is provided to simplify Docker commands. Ensure Docker Desktop is running, then use the following commands in your terminal:
+A `Makefile` is provided to simplify Docker commands. Use the following commands in your terminal:
 
 * **Development mode (DEBUG):** Builds and runs the container with hot-reloading enabled.
   ```bash
   make debug
+  ```
+  The API and the web interface will be available at `http://localhost:8000` (or as specified in your `.env.debug` file).
+
+* **Production mode (RELEASE):** Builds and runs the optimized, self-contained production container in RELEASE mode (running in the background).
+  ```bash
+  make release
+  ```
+
+* **Stopping the Application:** Safely stops the running container and removes the associated Docker networks.
+  ```bash
+  make down
+  ```
+
+### Note on State Management:
+Because the backend is strictly stateless, all uploaded and generated files are isolated in unique UUID folders within a sessions/ directory. A background garbage collection task automatically deletes inactive sessions to prevent the Docker container from running out of storage.
