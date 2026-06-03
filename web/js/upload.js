@@ -1,5 +1,12 @@
 window.addEventListener('DOMContentLoaded', async () => {
     await loadStepper(1);
+    const config = await getAppConfig();
+
+    const prevFilename = sessionStorage.getItem('sisal_uploaded_filename');
+    if (prevFilename) {
+        document.getElementById('previous-filename').textContent = prevFilename;
+        document.getElementById('previous-file-info').classList.remove('d-none');
+    }
 
     document.getElementById('btn-upload').addEventListener('click', async () => {
         const fileInput = document.getElementById('fileInput');
@@ -22,7 +29,11 @@ window.addEventListener('DOMContentLoaded', async () => {
             const data = await response.json();
             
             if (data.status === 'success') {
-                setCookie('sisal_session_id', data.session_id, 1/12); // 2 hours
+                sessionStorage.setItem('sisal_uploaded_filename', fileInput.files[0].name);
+                
+                const expireDays = config.session_timeout_hours / 24; 
+                setCookie('sisal_session_id', data.session_id, expireDays); 
+                setCookie('sisal_saved_step', '2', expireDays);
                 window.location.href = 'validate.html';
             }
         } 

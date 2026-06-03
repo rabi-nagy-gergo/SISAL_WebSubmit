@@ -1,0 +1,96 @@
+/* ==================================================== */
+/* Accordion Container Colors                           */
+/* ==================================================== */
+
+.panel-info { 
+    background-color: #e0f2fe; 
+    border: 1px solid #7dd3fc !important; 
+} 
+.panel-danger { 
+    background-color: #ffe4e6; 
+    border: 1px solid #fda4af !important; 
+}
+
+/* Map Container Colors */
+.panel-map { 
+    background-color: #d1e7dd; 
+    border: 1px solid #badbcc !important; 
+} 
+
+.accordion-button.map-btn,
+.accordion-button.map-btn:not(.collapsed) { 
+    background-color: #d1e7dd; 
+    color: #0f5132; 
+    font-weight: bold; 
+    box-shadow: none; 
+}
+
+/* Accordion Buttons */
+.accordion-button.info-btn,
+.accordion-button.info-btn:not(.collapsed) { 
+    background-color: #e0f2fe; 
+    color: #0369a1; 
+    font-weight: bold; 
+    box-shadow: none; 
+}
+
+.accordion-button.danger-btn,
+.accordion-button.danger-btn:not(.collapsed) { 
+    background-color: #ffe4e6; 
+    color: #be123c; 
+    font-weight: bold; 
+    box-shadow: none; 
+}
+
+/* Remove focus (click outline) */
+.accordion-button:focus {
+    box-shadow: none;
+}
+
+/* ==================================================== */
+/* Table Colors, Borders & Rounded Corners              */
+/* ==================================================== */
+
+#collapseInfo .table-responsive {
+    border: 1px solid #082f49;
+    border-radius: 0.375rem;
+}
+
+#collapseDanger .table-responsive {
+    border: 1px solid #4c0519;
+    border-radius: 0.375rem;
+}
+
+#table-informative, 
+#table-warnings {
+    border-style: hidden;
+    margin-bottom: 0;
+}
+
+/* Center headers horizontally and vertically */
+#table-informative th, 
+#table-warnings th {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+/* Informative Table */
+#table-informative {
+    --bs-table-border-color: #082f49;
+}
+#table-informative th { background-color: #38bdf8 !important; color: #082f49 !important; }
+#table-informative td { background-color: #e0f2fe !important; color: #0c4a6e; }
+#table-informative tr, #table-informative th, #table-informative td { border-color: #082f49 !important; }
+
+/* Warnings/Errors Table */
+#table-warnings {
+    --bs-table-border-color: #4c0519;
+}
+#table-warnings th { background-color: #fb7185 !important; color: #4c0519 !important; }
+#table-warnings td { background-color: #ffe4e6 !important; color: #be123c !important; }
+#table-warnings tr, #table-warnings th, #table-warnings td { border-color: #4c0519 !important; }
+
+/* Row Colors by Priority */
+.row-warning > td { background-color: #fef08a !important; color: #854d0e !important; } /* Yellow */
+.row-error > td { background-color: #fca5a5 !important; color: #7f1d1d !important; } /* Red */
+.row-fatal > td { background-color: #991b1b !important; color: #ffffff !important; font-weight: 500; } /* Dark Red */

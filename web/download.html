@@ -9,15 +9,15 @@
 </head>
 <body class="bg-light">
 
-<div class="container py-5">
+<div class="container py-4 py-md-5">
     <div class="row justify-content-center">
         <div class="col-lg-10">
-            <div id="stepper-container" class="mb-5"></div>
+            <div id="stepper-container" class="mb-4 mb-md-5"></div>
 
             <div class="card shadow-sm border-0 rounded-3">
-                <div class="card-body p-5">
+                <div class="card-body p-4 p-md-5">
                     
-                    <div class="text-center mb-5">
+                    <div class="text-center mb-4 mb-md-5">
                         <h3 class="fw-bold text-primary">Step 3: Download</h3>
                         <p class="text-muted">Download your validated results and manage your session.</p>
                     </div>
@@ -26,20 +26,21 @@
                         <h4 class="mb-3 text-success">The validation has been successful!</h4>
                         <p class="mb-4">Validated workbook and generated map can be downloaded.</p>
                         
-                        <a href="#" class="btn btn-success btn-lg mb-5 px-5" id="btn-download" target="_blank">Download results (.zip)</a>
+                        <a href="#" class="btn btn-success btn-lg mb-4 mb-md-5 px-4 px-md-5" id="btn-download" target="_blank">Download results (.zip)</a>
                         
-                        <div class="bg-light p-4 rounded-3 border">
-                            <h5 class="mb-3">Save session</h5>
-                            <p class="text-muted small mb-3">You can discard your files now, or save them on the server for 30 days to download later.</p>
-                            <div class="d-flex justify-content-center gap-3">
+                        <div class="bg-light p-3 p-md-4 rounded-3 border">
+                            <h5 class="mb-2 mb-md-3">Save session</h5>
+                            <p class="text-muted small mb-3" id="save-desc">You can discard your files now, or save them on the server to download later.</p>
+                            <div class="d-flex flex-column flex-sm-row justify-content-center gap-2 gap-sm-3">
                                 <button class="btn btn-outline-danger" id="btn-discard">Discard</button>
-                                <button class="btn btn-outline-primary" id="btn-save">Save (30 days)</button>
+                                <button class="btn btn-outline-primary" id="btn-save">Save session</button>
                             </div>
                         </div>
+
                     </div>
 
-                    <div class="d-flex justify-content-start mt-5 pt-4 border-top">
-                        <button class="btn btn-outline-secondary btn-lg px-4" id="btn-back-2">Back</button>
+                    <div class="d-flex justify-content-start mt-4 mt-md-5 pt-3 pt-md-4 border-top">
+                        <button class="btn btn-outline-secondary btn-lg nav-btn" id="btn-back-2">&larr; Back</button>
                     </div>
 
                 </div>

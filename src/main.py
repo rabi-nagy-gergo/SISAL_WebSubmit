@@ -15,12 +15,16 @@ from fastapi.staticfiles import StaticFiles
 SESSIONS_DIR = os.getenv("SESSIONS_DIR", "sessions")
 AUTOQC_SCRIPT_PATH = os.getenv("AUTOQC_SCRIPT_PATH", "src/wb_check_v15.py")
 
+# Session timeout constants
+SESSION_TIMEOUT_HOURS = float(os.getenv("SESSION_TIMEOUT_HOURS", 2.0))
+SAVED_SESSION_TIMEOUT_HOURS = float(os.getenv("SAVED_SESSION_TIMEOUT_HOURS", 168.0))
+
 # ==========================================
 # Background process: Garbage Collector
 # ==========================================
 async def garbage_collector():
     """
-    At every hours this function checks sessions directory
+    At every hour this function checks sessions directory
     and deletes expired sessions, based on session UUID.
     """
     while True:
@@ -35,14 +39,14 @@ async def garbage_collector():
                         with open(metadata_path, "r", encoding="utf-8") as f:
                             metadata = json.load(f)
                             
-                        # If current time exceeds the expiracy time, delete the session.
+                        # If current time exceeds the expiry time, delete the session.
                         if now > metadata.get("expires_at", 0):
                             shutil.rmtree(session_path, ignore_errors=True)
                             print(f"[Garbage Collector] Expired session deleted: {session_id}")
                     except Exception as e:
                         print(f"[Garbage Collector] An error occurred while checking session {session_id}: {e}")
         
-        # Runs at every hours.
+        # Runs at every hour.
         await asyncio.sleep(3600)
 
 @asynccontextmanager
@@ -76,29 +80,49 @@ def parse_qc_log_to_json(raw_log: str) -> dict:
         "informative_messages": [],
         "warnings": [],
         "total_warnings": 0,
+        "total_errors": 0,
+        "total_fatal": 0,
         "is_passed": False
     }
 
-    lines = raw_log.splitlines()
-    for line in lines:
-        line = line.strip()
+    for raw_line in raw_log.splitlines():
+        line = raw_line.strip()
         if not line:
             continue
-            
-        if line.startswith("Informative:"):
-            parsed_data["informative_messages"].append(line.replace("Informative: ", "").strip())
-        elif "warning/s were detected" in line:
-            try:
-                parsed_data["total_warnings"] = int(line.split()[0])
-            except ValueError:
-                pass
-        elif "QC checks passed" in line:
-            parsed_data["is_passed"] = True
-        elif "Workbook copied to:" in line or "Site map saved to:" in line:
-            continue 
+        try:
+            msg = json.loads(line)
+        except json.JSONDecodeError:
+            msg = {
+                "priority": "Warning",
+                "description": line,
+                "script_location": "",
+                "workbook_location": ""
+            }
+
+        priority = msg.get("priority", "Warning")
+        normalized = {
+            "priority": priority,
+            "description": msg.get("description", ""),
+            "script_location": msg.get("script_location", ""),
+            "workbook_location": msg.get("workbook_location", "")
+        }
+
+        if priority == "Informative":
+            parsed_data["informative_messages"].append(normalized)
         else:
-            parsed_data["warnings"].append(line)
-            
+            parsed_data["warnings"].append(normalized)
+            if priority == "Fatal":
+                parsed_data["total_fatal"] += 1
+            elif priority == "Error":
+                parsed_data["total_errors"] += 1
+            else:
+                parsed_data["total_warnings"] += 1
+
+    parsed_data["is_passed"] = (
+        parsed_data["total_warnings"] == 0
+        and parsed_data["total_errors"] == 0
+        and parsed_data["total_fatal"] == 0
+    )
     return parsed_data
 
 def get_session_paths(session_id: str):
@@ -110,6 +134,13 @@ def get_session_paths(session_id: str):
         "metadata": os.path.join(base_path, "metadata.json")
     }
 
+@app.get("/api/config")
+async def get_config():
+    return {
+        "session_timeout_hours": SESSION_TIMEOUT_HOURS,
+        "saved_session_timeout_hours": SAVED_SESSION_TIMEOUT_HOURS
+    }
+
 # ==========================================
 # File upload (Sisal .xlsx worksheet)
 # ==========================================
@@ -118,7 +149,7 @@ async def upload_file(file: UploadFile = File(...)):
     session_id = str(uuid.uuid4())
     paths = get_session_paths(session_id)
     
-    # Crate directory structure for this session.
+    # Create directory structure for this session.
     os.makedirs(paths["input"], exist_ok=True)
     os.makedirs(paths["output"], exist_ok=True)
     
@@ -127,8 +158,8 @@ async def upload_file(file: UploadFile = File(...)):
     with open(file_path, "wb+") as file_object:
         shutil.copyfileobj(file.file, file_object)
         
-    # Creating meatdata (Saved: false, expiracy: +2 hours)
-    expires_at = (datetime.now() + timedelta(hours=2)).timestamp()
+    # Creating metadata (Saved: false, set session expiry)
+    expires_at = (datetime.now() + timedelta(hours=SESSION_TIMEOUT_HOURS)).timestamp()
     metadata = {
         "saved": False,
         "expires_at": expires_at
@@ -170,18 +201,47 @@ async def validate_file(session_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to execute validation script: {str(e)}")
     
-    # Process stdout.
-    report = parse_qc_log_to_json(result.stdout)
+    # Process the structured QC log generated by AutoQC.
+    log_path = os.path.join(paths["output"], "QC_log_" + os.path.splitext(filename)[0] + ".txt")
+    raw_log = ""
+    if os.path.exists(log_path):
+        with open(log_path, "r", encoding="utf-8") as f:
+            raw_log = f.read()
+
+    report = parse_qc_log_to_json(raw_log)
     
-    # If the script exited with error. (eg. sys.exit, because using an older version)
-    if result.returncode != 0:
+    if result.returncode != 0 or report["total_fatal"] > 0:
+        if not report["warnings"]:
+            report["warnings"].append({
+                "priority": "Fatal",
+                "description": "A fatal error occurred while running AutoQC, but no structured log entry was produced.",
+                "script_location": "main.py",
+                "workbook_location": ""
+            })
+            report["total_fatal"] = 1
         return {
             "status": "fatal_error",
-            "message": "A fatal error occurred while workbook quality check.",
-            "details": f"STDOUT:\n{result.stdout}\n\nSTDERR:\n{result.stderr}"
+            "message": "A fatal error occurred during workbook quality check.",
+            "report": report
         }
         
     return {"status": "success", "report": report}
+
+# ==========================================
+# Serve Generated Map Image
+# ==========================================
+@app.get("/api/map/{session_id}")
+async def get_map(session_id: str):
+    paths = get_session_paths(session_id)
+    if not os.path.exists(paths["output"]):
+        raise HTTPException(status_code=404, detail="Session not found.")
+        
+    # Search for the generated png map
+    for file in os.listdir(paths["output"]):
+        if file.startswith("map_") and file.endswith(".png"):
+            return FileResponse(os.path.join(paths["output"], file))
+            
+    raise HTTPException(status_code=404, detail="Map not found.")
 
 # ==========================================
 # Download results
@@ -215,8 +275,8 @@ async def save_session(session_id: str):
     if not os.path.exists(paths["base"]):
         raise HTTPException(status_code=404, detail="Session not found or expired.")
         
-    # Add +30 days to expiracy time.
-    expires_at = (datetime.now() + timedelta(days=30)).timestamp()
+    # Set session expiry.
+    expires_at = (datetime.now() + timedelta(hours=SAVED_SESSION_TIMEOUT_HOURS)).timestamp()
     metadata = {
         "saved": True,
         "expires_at": expires_at
@@ -224,7 +284,7 @@ async def save_session(session_id: str):
     with open(paths["metadata"], "w", encoding="utf-8") as f:
         json.dump(metadata, f)
         
-    return {"status": "success", "message": "Session saved for 30 days."}
+    return {"status": "success", "message": "Session saved."}
 
 @app.post("/api/session/{session_id}/discard")
 async def discard_session(session_id: str):
