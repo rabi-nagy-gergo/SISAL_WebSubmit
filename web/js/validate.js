@@ -1,32 +1,25 @@
 window.addEventListener('DOMContentLoaded', async () => {
     await loadStepper(2);
-    
+    const config = await getAppConfig();
+
     const currentSessionId = getCookie('sisal_session_id');
     if (!currentSessionId) {
         window.location.href = 'upload.html';
         return;
     }
 
-    // Button event listeners
-    const btnBack1 = document.getElementById('btn-back-1');
-    if (btnBack1) {
-        btnBack1.addEventListener('click', () => {
-            window.location.href = 'upload.html';
-        });
-    }
+    document.getElementById('btn-back-1')?.addEventListener('click', () => {
+        window.location.href = 'upload.html';
+    });
 
-    const btnNext3 = document.getElementById('btn-next-3');
-    if (btnNext3) {
-        btnNext3.addEventListener('click', () => {
-            window.location.href = 'download.html';
-        });
-    }
+    document.getElementById('btn-next-3')?.addEventListener('click', () => {
+        window.location.href = 'download.html';
+    });
 
-    // Start validation process automatically
-    runValidation(currentSessionId);
+    runValidation(currentSessionId, config);
 });
 
-async function runValidation(sessionId) {
+async function runValidation(sessionId, config) {
     const spinner = document.getElementById('validation-spinner');
     const resultsDiv = document.getElementById('validation-results');
     const btnNext = document.getElementById('btn-next-3');
@@ -34,61 +27,115 @@ async function runValidation(sessionId) {
     try {
         const response = await fetch(`${API_BASE_URL}/validate/${sessionId}`, { method: 'POST' });
         const data = await response.json();
-        
+
         spinner.classList.add('d-none');
         resultsDiv.classList.remove('d-none');
 
         renderReport(data);
 
-        if (data.status === 'success' && data.report.is_passed && data.report.total_warnings === 0) {
+        // Load the map image dynamically
+        const mapContainer = document.getElementById('map-container');
+        const mapImg = document.getElementById('site-map-img');
+        
+        // If the image loads successfully, reveal the container
+        mapImg.onload = () => { 
+            mapContainer.classList.remove('d-none'); 
+        };
+
+        mapImg.onerror = () => { 
+            mapContainer.classList.add('d-none'); 
+        };
+        
+        // Fetch the map from the new backend endpoint
+        mapImg.src = `${API_BASE_URL}/map/${sessionId}?t=${new Date().getTime()}`;
+
+        if (data.status === 'success' && data.report.is_passed && 
+                data.report.total_warnings === 0 && 
+                data.report.total_errors === 0 && 
+                data.report.total_fatal === 0) {
             btnNext.disabled = false;
             unlockStep(3);
+            
+            const expireDays = config.session_timeout_hours / 24;
+            setCookie('sisal_session_id', sessionId, expireDays); 
+            setCookie('sisal_saved_step', '3', expireDays);
         }
-    } 
-    catch (error) {
+    } catch (error) {
         alert('An error occurred during validation!');
         spinner.classList.add('d-none');
     }
 }
 
-function renderReport(data) {
-    const alertBox = document.getElementById('status-alert');
-    const listInfo = document.getElementById('list-informative');
-    const tableWarn = document.getElementById('table-warnings').querySelector('tbody');
-    
-    listInfo.innerHTML = '';
-    tableWarn.innerHTML = '';
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
 
-    if (data.status === 'fatal_error') {
-        alertBox.className = 'alert alert-danger';
-        alertBox.innerHTML = `<strong>Fatal Error!</strong> ${data.message}`;
-        tableWarn.innerHTML = `<tr><td>${data.details}</td></tr>`;
+function normalizeMessage(message, defaultPriority) {
+    if (typeof message === 'string') {
+        return { priority: defaultPriority, description: message, script_location: '', workbook_location: '' };
+    }
+    return {
+        priority: message.priority || defaultPriority,
+        description: message.description || '',
+        script_location: message.script_location || '',
+        workbook_location: message.workbook_location || ''
+    };
+}
+
+function renderMessageRows(tbody, messages, defaultPriority, emptyText, emptyClass = 'text-muted') {
+    tbody.innerHTML = '';
+
+    if (!messages || messages.length === 0) {
+        tbody.innerHTML = `<tr class="${defaultPriority === 'Informative' ? '' : 'row-empty'}"><td colspan="4" class="${emptyClass} text-center">${escapeHtml(emptyText)}</td></tr>`;
         return;
     }
 
-    const report = data.report;
-    const isSuccess = report.is_passed && report.total_warnings === 0;
+    messages.forEach(message => {
+        const msg = normalizeMessage(message, defaultPriority);
+        
+        let rowClass = '';
+        const priorityLower = msg.priority.toLowerCase();
+        
+        if (priorityLower.includes('fatal')) {
+            rowClass = 'row-fatal';
+        } else if (priorityLower.includes('error')) {
+            rowClass = 'row-error';
+        } else if (priorityLower.includes('warning')) {
+            rowClass = 'row-warning';
+        }
+        
+        tbody.innerHTML += `<tr class="${rowClass}">
+            <td>${escapeHtml(msg.priority)}</td>
+            <td>${escapeHtml(msg.description)}</td>
+            <td>${escapeHtml(msg.script_location)}</td>
+            <td>${escapeHtml(msg.workbook_location)}</td>
+        </tr>`;
+    });
+}
+
+function renderReport(data) {
+    const alertBox = document.getElementById('status-alert');
+    const report = data.report || { informative_messages: [], warnings: [], total_warnings: 0, total_errors: 0, total_fatal: 0, is_passed: false };
+
+    renderMessageRows(document.getElementById('table-informative').querySelector('tbody'), report.informative_messages, 'Informative', 'No information available.');
+    renderMessageRows(document.getElementById('table-warnings').querySelector('tbody'), report.warnings, 'Warning', 'No warnings or errors to display.');
+
+    if (data.status === 'fatal_error' || report.total_fatal > 0) {
+        alertBox.className = 'alert alert-danger';
+        alertBox.innerHTML = `<strong>Fatal Error!</strong> ${escapeHtml(data.message || 'Validation stopped because a fatal error occurred.')}`;
+        return;
+    }
+
+    const blockingIssues = (report.total_warnings || 0) + (report.total_errors || 0) + (report.total_fatal || 0);
+    const isSuccess = report.is_passed && blockingIssues === 0;
 
     alertBox.className = isSuccess ? 'alert alert-success' : 'alert alert-warning';
-    alertBox.innerHTML = isSuccess 
-        ? '<strong>Validation successful!</strong> No errors found.' 
-        : `<strong>Warning!</strong> ${report.total_warnings} issue(s) found.`;
-
-    if (report.informative_messages.length === 0) {
-        listInfo.innerHTML = '<li class="list-group-item text-muted">No information available.</li>';
-    } 
-    else {
-        report.informative_messages.forEach(msg => {
-            listInfo.innerHTML += `<li class="list-group-item list-group-item-info">${msg}</li>`;
-        });
-    }
-
-    if (report.warnings.length === 0) {
-        tableWarn.innerHTML = '<tr><td class="text-success text-center">No errors to display.</td></tr>';
-    } 
-    else {
-        report.warnings.forEach(warn => {
-            tableWarn.innerHTML += `<tr><td>${warn}</td></tr>`;
-        });
-    }
+    alertBox.innerHTML = isSuccess
+        ? '<strong>Validation successful!</strong> No errors found.'
+        : `<strong>Warning!</strong> ${blockingIssues} issue(s) found.`;
 }

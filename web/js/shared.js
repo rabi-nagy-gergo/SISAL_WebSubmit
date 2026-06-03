@@ -1,6 +1,20 @@
 const API_BASE_URL = '/api';
 
 // ==========================================
+// Configuration getter
+// ==========================================
+async function getAppConfig() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/config`);
+        return await response.json();
+    } 
+    catch (error) {
+        console.error("Could not load config from server, using fallbacks.", error);
+        return { session_timeout_hours: 2, saved_session_timeout_hours: 168 }; 
+    }
+}
+
+// ==========================================
 // Helper functions (Cookie management)
 // ==========================================
 function setCookie(name, value, days) {

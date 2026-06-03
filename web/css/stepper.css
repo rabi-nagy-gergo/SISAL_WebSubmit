@@ -100,3 +100,36 @@
 .stepper-item.disabled:hover .stepper-circle {
     background-color: #e9ecef;
 }
+
+/* ==========================================
+   Responsive Overrides for Mobile Screens
+   ========================================== */
+.nav-btn {
+    min-width: 160px;
+}
+
+@media (max-width: 575.98px) {
+    .btn-lg, .form-control-lg {
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+    }
+    
+    .nav-btn {
+        min-width: 120px;
+    }
+
+    .stepper-wrapper {
+        margin-bottom: 1.5rem;
+    }
+    .stepper-circle {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    .stepper-item::before {
+        top: 20px;
+    }
+    .stepper-title {
+        font-size: 0.85rem;
+    }
+}
