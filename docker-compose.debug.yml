@@ -1,0 +1,9 @@
+services:
+  api:
+    build:
+      target: development
+    volumes:
+      - ./src:/app/src
+      - ./web:/app/web
+    env_file:
+      - .env.debug

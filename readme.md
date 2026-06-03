@@ -1,0 +1,33 @@
+# SISAL Web Submit
+
+## Introduction
+The SISAL Web Submit project transforms an existing local data submission workflow into an interactive web application designed for uploading, auditing, and validating speleothem data. The SISAL speleothem database is one of the largest databases of its kind in the world. Historically, data submission has been manual, requiring significant time and effort. 
+
+This application automates the validation process by providing a user-friendly interface built with Vanilla HTML, Bootstrap, and Vanilla JavaScript, connected to a stateless, file-system-based FastAPI backend. It allows contributors to run complex quality control (AutoQC) and plotting scripts seamlessly from their browsers.
+
+## Submission Workflow
+The data submission process is divided into the following sequential stages:
+
+* **Stage 1: File Upload:** The contributor fills out the provided Excel workbook template with their speleothem sample data and uploads it through the web interface.
+* **Stage 2: Validation (AutoQC):** The FastAPI backend executes a Python QC script (`wb_check_v15.py`) to validate the workbook's content and structure. This script generates a QC log, a regional site map, and a QC-passed copy of the workbook if no structural or logical errors are found. The web interface parses the standard output to provide immediate feedback on any warnings or informative messages.
+* **Stage 3: Age-Model & Proxy Plotting:** Once the initial validation is successful, an R plotting script (`run_plots.R`) is executed. This script generates a PDF for each entity containing age models, potential hiatuses, and proxy time-series plots. These plots are saved to an output folder and embedded directly into the webpage for visual inspection.
+* **Stage 4: Download and Finalization:** As a final step, the contributor can download a `.zip` archive containing the validated Excel file and the PDF plots. The validated data and documentation are then manually forwarded to a SISAL Data Steward to complete the database submission.
+
+## Technical Information (Stack)
+* **Backend:** Python, FastAPI
+* **Frontend:** Vanilla HTML, Vanilla JavaScript, Bootstrap 5
+* **Data Validation (Python):** Requires `pandas`, `numpy`, `openpyxl`, `xlrd`, `matplotlib`, `cartopy`, and `shapely`.
+* **Plotting (R):** Requires `openxlsx` and `ggplot2`.
+* **Architecture:** Stateless API relying on session UUIDs and temporary file system storage with automated background garbage collection.
+
+## Dockerization
+The project operates in a 100% Dockerized multi-stage environment (DEBUG and RELEASE). Environmental dependencies are managed via `.env` files. The development version supports live hot-reloading via volume mounting, while the production version is fully self-contained and optimized for performance.
+
+## Development Guide
+
+### Starting the Application
+A `Makefile` is provided to simplify Docker commands. Ensure Docker Desktop is running, then use the following commands in your terminal:
+
+* **Development mode (DEBUG):** Builds and runs the container with hot-reloading enabled.
+  ```bash
+  make debug

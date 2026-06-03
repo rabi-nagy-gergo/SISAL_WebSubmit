@@ -1,0 +1,102 @@
+/* ==========================================
+   Custom Stepper Styles
+   ========================================== */
+.stepper-wrapper {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.stepper-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+.stepper-item.disabled {
+    cursor: not-allowed;
+}
+
+.stepper-item.disabled .stepper-title {
+    color: #adb5bd; 
+}
+
+.stepper-item::before {
+    content: '';
+    position: absolute;
+    top: 25px;
+    left: -50%;
+    width: 100%;
+    height: 4px;
+    background-color: #e9ecef;
+    z-index: 0;
+    transition: background-color 0.3s;
+}
+
+.stepper-item:first-child::before {
+    content: none;
+}
+
+.stepper-circle {
+    position: relative; 
+    z-index: 1;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    border: 4px solid #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.stepper-title {
+    color: #6c757d;
+    margin-top: 0.5rem;
+    transition: color 0.3s ease;
+}
+
+.stepper-item.active .stepper-circle,
+.stepper-item.completed .stepper-circle {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.stepper-item.active::before,
+.stepper-item.completed::before {
+    background-color: #0d6efd;
+}
+
+.stepper-item.active .stepper-title,
+.stepper-item.completed .stepper-title {
+    color: #212529;
+}
+
+/* ==========================================
+   Hover effects
+   ========================================== */
+.stepper-item:not(.disabled):hover .stepper-circle {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 5px rgba(13, 110, 253, 0.2);
+    border-color: #fff;
+}
+
+.stepper-item:not(.disabled):hover .stepper-title {
+    color: #0d6efd;
+}
+
+.stepper-item.disabled:hover .stepper-circle {
+    background-color: #e9ecef;
+}

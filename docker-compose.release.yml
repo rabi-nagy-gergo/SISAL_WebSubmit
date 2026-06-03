@@ -1,0 +1,6 @@
+services:
+  api:
+    build:
+      target: production
+    env_file:
+      - .env.release
