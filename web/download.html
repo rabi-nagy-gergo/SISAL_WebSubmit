@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download - SISAL Web Submit</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/stepper.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div id="stepper-container" class="mb-5"></div>
+
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body p-5">
+                    
+                    <div class="text-center mb-5">
+                        <h3 class="fw-bold text-primary">Step 3: Download</h3>
+                        <p class="text-muted">Download your validated results and manage your session.</p>
+                    </div>
+
+                    <div class="text-center">
+                        <h4 class="mb-3 text-success">The validation has been successful!</h4>
+                        <p class="mb-4">Validated workbook and generated map can be downloaded.</p>
+                        
+                        <a href="#" class="btn btn-success btn-lg mb-5 px-5" id="btn-download" target="_blank">Download results (.zip)</a>
+                        
+                        <div class="bg-light p-4 rounded-3 border">
+                            <h5 class="mb-3">Save session</h5>
+                            <p class="text-muted small mb-3">You can discard your files now, or save them on the server for 30 days to download later.</p>
+                            <div class="d-flex justify-content-center gap-3">
+                                <button class="btn btn-outline-danger" id="btn-discard">Discard</button>
+                                <button class="btn btn-outline-primary" id="btn-save">Save (30 days)</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-start mt-5 pt-4 border-top">
+                        <button class="btn btn-outline-secondary btn-lg px-4" id="btn-back-2">Back</button>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/shared.js"></script>
+<script src="js/stepper.js"></script>
+<script src="js/download.js"></script>
+</body>
+</html>

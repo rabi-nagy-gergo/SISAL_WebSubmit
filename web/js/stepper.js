@@ -2,7 +2,7 @@
 // Stepper (Status bar) Component Logic
 // ==========================================
 
-async function loadStepper() {
+async function loadStepper(currentStep) {
     const container = document.getElementById('stepper-container');
     if (!container) return;
     
@@ -11,54 +11,23 @@ async function loadStepper() {
         const html = await response.text();
         container.innerHTML = html;
         
+        updateStepperVisuals(currentStep);
+        
         document.querySelectorAll('.stepper-item').forEach(item => {
             item.addEventListener('click', () => {
                 if (item.classList.contains('disabled')) return;
                 
                 const step = parseInt(item.getAttribute('data-step'));
-                goToStep(step);
+                if (step === 1) window.location.href = 'upload.html';
+                if (step === 2) window.location.href = 'validate.html';
+                if (step === 3) window.location.href = 'download.html';
             });
         });
-
-        initNavigationButtons();
+        
     }
     catch (error) {
         console.error("Failed to load stepper component: ", error);
     }
-}
-
-function initNavigationButtons() {
-    // Step back from 2 to 1 (Retry)
-    const btnBack = document.getElementById('btn-back-1');
-    if (btnBack) {
-        btnBack.addEventListener('click', () => {
-            goToStep(1);
-            const fileInput = document.getElementById('fileInput');
-            if (fileInput) fileInput.value = ''; // Clear input
-        });
-    }
-
-    // Proceed from 2 to 3
-    const btnNext = document.getElementById('btn-next-3');
-    if (btnNext) {
-        btnNext.addEventListener('click', () => {
-            goToStep(3);
-            // Set download button reference
-            const btnDownload = document.getElementById('btn-download');
-            if (btnDownload) {
-                btnDownload.href = `${API_BASE_URL}/download/${currentSessionId}`;
-            }
-        });
-    }
-}
-
-function goToStep(step) {
-    document.querySelectorAll('.step-container').forEach(el => el.classList.remove('step-active'));
-    
-    const activeStep = document.getElementById(`step-${step}`);
-    if (activeStep) activeStep.classList.add('step-active');
-    
-    updateStepperVisuals(step);
 }
 
 function updateStepperVisuals(currentStep) {
