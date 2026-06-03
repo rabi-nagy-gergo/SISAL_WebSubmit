@@ -25,6 +25,14 @@ The project operates in a 100% Dockerized multi-stage environment (DEBUG and REL
 
 ## Development Guide
 
+### Prerequisites
+Before you can run or develop the application, you need to have the following tools installed on your system:
+
+* **Docker:** The application is fully containerized. You must install Docker to build and run the images.
+  * For **Windows and macOS**, install [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+  * For **Linux** environments, install the [Docker Engine](https://docs.docker.com/engine/install/) along with the [Docker Compose](https://docs.docker.com/compose/install/) plugin.
+* **Make (Optional but recommended):** The project uses a `Makefile` to simplify Docker commands. This is usually available by default on Linux and macOS. On Windows, you can either run the underlying `docker compose` commands directly, use WSL2, or install a native Make tool.
+
 ### Starting the Application
 A `Makefile` is provided to simplify Docker commands. Use the following commands in your terminal:
 
