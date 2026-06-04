@@ -13,7 +13,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
 
     document.getElementById('btn-next-3')?.addEventListener('click', () => {
-        window.location.href = 'download.html';
+        window.location.href = 'plots.html';
     });
 
     runValidation(currentSessionId, config);
@@ -60,7 +60,8 @@ async function runValidation(sessionId, config) {
             setCookie('sisal_session_id', sessionId, expireDays); 
             setCookie('sisal_saved_step', '3', expireDays);
         }
-    } catch (error) {
+    } 
+    catch (error) {
         alert('An error occurred during validation!');
         spinner.classList.add('d-none');
     }
@@ -79,6 +80,7 @@ function normalizeMessage(message, defaultPriority) {
     if (typeof message === 'string') {
         return { priority: defaultPriority, description: message, script_location: '', workbook_location: '' };
     }
+    
     return {
         priority: message.priority || defaultPriority,
         description: message.description || '',
@@ -103,9 +105,11 @@ function renderMessageRows(tbody, messages, defaultPriority, emptyText, emptyCla
         
         if (priorityLower.includes('fatal')) {
             rowClass = 'row-fatal';
-        } else if (priorityLower.includes('error')) {
+        } 
+        else if (priorityLower.includes('error')) {
             rowClass = 'row-error';
-        } else if (priorityLower.includes('warning')) {
+        } 
+        else if (priorityLower.includes('warning')) {
             rowClass = 'row-warning';
         }
         

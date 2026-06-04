@@ -1,0 +1,57 @@
+/* ==================================================== */
+/* Plots Accordion Panel                                */
+/* ==================================================== */
+
+.panel-plots {
+    background-color: #ede9fe;
+    border: 1px solid #c4b5fd !important;
+}
+
+.accordion-button.plots-btn,
+.accordion-button.plots-btn:not(.collapsed) {
+    background-color: #ede9fe;
+    color: #4c1d95;
+    font-weight: bold;
+    box-shadow: none;
+}
+
+/* Remove focus outline */
+.accordion-button:focus {
+    box-shadow: none;
+}
+
+/* ==================================================== */
+/* Plot Cards                                           */
+/* ==================================================== */
+
+.plot-card {
+    border: 1px solid #c4b5fd;
+    border-radius: 0.5rem;
+    background-color: #f5f3ff;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+}
+
+.plot-card:hover {
+    box-shadow: 0 4px 14px rgba(109, 40, 217, 0.18);
+}
+
+.plot-card a {
+    display: block;
+}
+
+.plot-img {
+    width: 100%;
+    display: block;
+    border-bottom: 1px solid #c4b5fd;
+    cursor: zoom-in;
+}
+
+.plot-label {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #4c1d95;
+    text-align: center;
+    background-color: #ede9fe;
+}

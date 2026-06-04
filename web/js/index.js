@@ -17,8 +17,11 @@ window.addEventListener('DOMContentLoaded', () => {
             modal.hide();
 
             const savedStep = getCookie('sisal_saved_step');
-            if (savedStep === '3') {
+            if (savedStep === '4') {
                 window.location.href = 'download.html';
+            } 
+            else if (savedStep === '3') {
+                window.location.href = 'plots.html';
             } 
             else if (savedStep === '2') {
                 window.location.href = 'validate.html';

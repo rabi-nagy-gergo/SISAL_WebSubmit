@@ -6,13 +6,16 @@ ENV PIP_ROOT_USER_ACTION=ignore
 
 WORKDIR /app
 
-# Installing system dependecies for Cartopy and Shapely packages.
+# Installing system dependecies for Cartopy, Shapely packages AND R scripting
 RUN apt-get update && apt-get install -y \
     build-essential \
     libgeos-dev \
     libproj-dev \
     proj-data \
     proj-bin \
+    r-base \
+    r-cran-ggplot2 \
+    r-cran-openxlsx \
     && rm -rf /var/lib/apt/lists/*
 
 # Installing Python packages
