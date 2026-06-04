@@ -20,7 +20,8 @@ async function loadStepper(currentStep) {
                 const step = parseInt(item.getAttribute('data-step'));
                 if (step === 1) window.location.href = 'upload.html';
                 if (step === 2) window.location.href = 'validate.html';
-                if (step === 3) window.location.href = 'download.html';
+                if (step === 3) window.location.href = 'plots.html';
+                if (step === 4) window.location.href = 'download.html';
             });
         });
         

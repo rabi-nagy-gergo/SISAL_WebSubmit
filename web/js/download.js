@@ -1,5 +1,5 @@
 window.addEventListener('DOMContentLoaded', async () => {
-    await loadStepper(3);
+    await loadStepper(4);
     const config = await getAppConfig();
 
     const currentSessionId = getCookie('sisal_session_id');
@@ -16,10 +16,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-save').textContent = `Save (${daysForUI} days)`;
 
     // Button event listeners
-    const btnBack2 = document.getElementById('btn-back-2');
-    if (btnBack2) {
-        btnBack2.addEventListener('click', () => {
-            window.location.href = 'validate.html';
+    const btnBack = document.getElementById('btn-back-3');
+    if (btnBack) {
+        btnBack.addEventListener('click', () => {
+            window.location.href = 'plots.html';
         });
     }
 
@@ -39,7 +39,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         await fetch(`${API_BASE_URL}/session/${currentSessionId}/save`, { method: 'POST' });
         const expireDays = hours / 24;
         setCookie('sisal_session_id', currentSessionId, expireDays);
-        setCookie('sisal_saved_step', '3', expireDays);
+        setCookie('sisal_saved_step', '4', expireDays); 
         
         alert(`Your work has been successfully saved for ${daysForUI} days!`);
         window.location.href = 'index.html';
