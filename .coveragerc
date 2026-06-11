@@ -1,0 +1,5 @@
+[run]
+omit =
+    src/services/wb_check_v15.py
+    src/services/run_plots.R
+    src/services/plot_agemodels_hiatus.R

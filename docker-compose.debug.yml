@@ -5,5 +5,7 @@ services:
     volumes:
       - ./src:/app/src
       - ./web:/app/web
+      - ./tests:/app/tests
+      - ./.coveragerc:/app/.coveragerc
     env_file:
       - .env.debug
