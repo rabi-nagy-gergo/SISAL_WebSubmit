@@ -73,7 +73,7 @@ async def get_map(session_id: str):
     if not os.path.exists(paths["output"]):
         raise HTTPException(status_code=404, detail="Session not found.")
         
-    # Search for the generated png map
+    # Search for the generated png map  
     for file in os.listdir(paths["output"]):
         if file.startswith("map_") and file.endswith(".png"):
             return FileResponse(os.path.join(paths["output"], file))

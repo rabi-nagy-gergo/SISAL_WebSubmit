@@ -11,3 +11,9 @@ xlrd
 matplotlib
 cartopy
 shapely
+
+# Python tester dependencies
+pytest
+pytest-asyncio
+pytest-cov
+httpx2

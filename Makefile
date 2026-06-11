@@ -1,4 +1,4 @@
-.PHONY: debug release down logs
+.PHONY: debug release down logs test test-new
 
 debug:
 	docker compose -f docker-compose.yml -f docker-compose.debug.yml up -d --build
@@ -11,3 +11,6 @@ down:
 
 logs:
 	docker compose logs -f api
+
+test:
+	docker compose -f docker-compose.yml -f docker-compose.debug.yml run --rm api pytest --cov=src --cov-config=.coveragerc --cov-report=term-missing tests/
