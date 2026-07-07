@@ -8,8 +8,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from src.services.api_utils import SESSIONS_DIR, SESSION_TIMEOUT_HOURS, SAVED_SESSION_TIMEOUT_HOURS
+from src.services.api_utils import (
+    SESSIONS_DIR,
+    SESSION_TIMEOUT_HOURS,
+    SAVED_SESSION_TIMEOUT_HOURS,
+)
 from src.pages import upload, validation, plots, download
+
 
 # ==========================================
 # Background process: Garbage Collector
@@ -25,21 +30,26 @@ async def garbage_collector():
             for session_id in os.listdir(SESSIONS_DIR):
                 session_path = os.path.join(SESSIONS_DIR, session_id)
                 metadata_path = os.path.join(session_path, "metadata.json")
-                
+
                 if os.path.exists(metadata_path):
                     try:
                         with open(metadata_path, "r", encoding="utf-8") as f:
                             metadata = json.load(f)
-                            
+
                         # If current time exceeds the expiry time, delete the session.
                         if now > metadata.get("expires_at", 0):
                             shutil.rmtree(session_path, ignore_errors=True)
-                            print(f"[Garbage Collector] Expired session deleted: {session_id}")
+                            print(
+                                f"[Garbage Collector] Expired session deleted: {session_id}"
+                            )
                     except Exception as e:
-                        print(f"[Garbage Collector] An error occurred while checking session {session_id}: {e}")
-        
+                        print(
+                            f"[Garbage Collector] An error occurred while checking session {session_id}: {e}"
+                        )
+
         # Runs at every hour.
         await asyncio.sleep(3600)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -50,8 +60,9 @@ async def lifespan(app: FastAPI):
     # On server shutdown: Shut down garbage collector.
     gc_task.cancel()
 
+
 # ==========================================
-# FastAPI Initialization 
+# FastAPI Initialization
 # ==========================================
 app = FastAPI(title="SISAL AutoQC API", lifespan=lifespan)
 
@@ -70,12 +81,14 @@ app.include_router(validation.router)
 app.include_router(plots.router)
 app.include_router(download.router)
 
+
 @app.get("/api/config")
 async def get_config():
     return {
         "session_timeout_hours": SESSION_TIMEOUT_HOURS,
-        "saved_session_timeout_hours": SAVED_SESSION_TIMEOUT_HOURS
+        "saved_session_timeout_hours": SAVED_SESSION_TIMEOUT_HOURS,
     }
+
 
 # Mount frontend code to root directory
 app.mount("/", StaticFiles(directory="web", html=True), name="web")

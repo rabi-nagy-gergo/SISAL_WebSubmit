@@ -13,4 +13,9 @@ logs:
 	docker compose logs -f api
 
 test:
-	docker compose -f docker-compose.yml -f docker-compose.debug.yml run --rm api pytest --cov=src --cov-config=.coveragerc --cov-report=term-missing tests/
+	docker compose -f docker-compose.yml -f docker-compose.debug.yml run --rm \
+		-v $(CURDIR)/coverage-output:/app/coverage-output \
+		api pytest --cov=src --cov-config=.coveragerc \
+		--cov-report=term-missing \
+		--cov-report=xml:coverage-output/coverage.xml \
+		tests/

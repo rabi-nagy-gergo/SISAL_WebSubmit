@@ -10,6 +10,7 @@ R_PLOT_SCRIPT_PATH = os.getenv("R_PLOT_SCRIPT_PATH", "src/services/run_plots.R")
 SESSION_TIMEOUT_HOURS = float(os.getenv("SESSION_TIMEOUT_HOURS", 2.0))
 SAVED_SESSION_TIMEOUT_HOURS = float(os.getenv("SAVED_SESSION_TIMEOUT_HOURS", 168.0))
 
+
 # ==========================================
 # Helpers
 # ==========================================
@@ -20,7 +21,7 @@ def parse_qc_log_to_json(raw_log: str) -> dict:
         "total_warnings": 0,
         "total_errors": 0,
         "total_fatal": 0,
-        "is_passed": False
+        "is_passed": False,
     }
 
     for raw_line in raw_log.splitlines():
@@ -34,7 +35,7 @@ def parse_qc_log_to_json(raw_log: str) -> dict:
                 "priority": "Warning",
                 "description": line,
                 "script_location": "",
-                "workbook_location": ""
+                "workbook_location": "",
             }
 
         priority = msg.get("priority", "Warning")
@@ -42,7 +43,7 @@ def parse_qc_log_to_json(raw_log: str) -> dict:
             "priority": priority,
             "description": msg.get("description", ""),
             "script_location": msg.get("script_location", ""),
-            "workbook_location": msg.get("workbook_location", "")
+            "workbook_location": msg.get("workbook_location", ""),
         }
 
         if priority == "Informative":
@@ -63,11 +64,12 @@ def parse_qc_log_to_json(raw_log: str) -> dict:
     )
     return parsed_data
 
+
 def get_session_paths(session_id: str):
     base_path = os.path.join(SESSIONS_DIR, session_id)
     return {
         "base": base_path,
         "input": os.path.join(base_path, "input"),
         "output": os.path.join(base_path, "output"),
-        "metadata": os.path.join(base_path, "metadata.json")
+        "metadata": os.path.join(base_path, "metadata.json"),
     }
