@@ -7,6 +7,7 @@ from src.services.api_utils import R_PLOT_SCRIPT_PATH, get_session_paths
 
 router = APIRouter()
 
+
 # ==========================================
 # R Plotting
 # ==========================================
@@ -30,23 +31,27 @@ async def run_plots(session_id: str):
             ["Rscript", R_PLOT_SCRIPT_PATH, filename],
             capture_output=True,
             text=True,
-            env=env
+            env=env,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to execute R plotting script: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to execute R plotting script: {str(e)}"
+        )
 
     if result.returncode != 0:
         return {
             "status": "error",
             "message": "R plotting script failed.",
-            "stderr": result.stderr[-3000:] if result.stderr else ""
+            "stderr": result.stderr[-3000:] if result.stderr else "",
         }
 
     plot_files = sorted(
-        f for f in os.listdir(paths["output"])
+        f
+        for f in os.listdir(paths["output"])
         if f.startswith("plot_") and f.endswith(".png")
     )
     return {"status": "success", "plots": plot_files}
+
 
 @router.get("/api/plots/{session_id}")
 async def list_plots(session_id: str):
@@ -55,10 +60,12 @@ async def list_plots(session_id: str):
         raise HTTPException(status_code=404, detail="Session not found.")
 
     plot_files = sorted(
-        f for f in os.listdir(paths["output"])
+        f
+        for f in os.listdir(paths["output"])
         if f.startswith("plot_") and f.endswith(".png")
     )
     return {"plots": plot_files}
+
 
 @router.get("/api/plots/{session_id}/{filename}")
 async def get_plot_image(session_id: str, filename: str):
