@@ -1,3 +1,6 @@
+![CI](https://github.com/rabi-nagy-gergo/SISAL_WebSubmit/actions/workflows/ci.yml/badge.svg)
+[![codecov](https://codecov.io/github/rabi-nagy-gergo/SISAL_WebSubmit/graph/badge.svg?token=R8CYNEHYC2)](https://codecov.io/github/rabi-nagy-gergo/SISAL_WebSubmit)
+
 # SISAL Web Submit
 
 ## Introduction
