@@ -176,7 +176,18 @@ def fatal(description, workbook_location=''):
     try:
         _log_fh.close()
     finally:
-        fatal(1)
+        sys.exit(1)
+
+def status_msg(percentage, section, description):
+    record = {
+        'priority': 'Status message',
+        'percentage': percentage,
+        'section': str(section).strip(),
+        'description': str(description).strip()
+    }
+    print(json.dumps(record, ensure_ascii=False), flush=True)
+
+status_msg(5, "Initialization", "Reading Excel file into memory...")
 
 # Try to read in the workbook
 try:
@@ -185,6 +196,8 @@ try:
 except:
     # If fails to read in workbook, exit the script
     fatal('Cannot read in excel file. An error occurred while pandas util tried to read the given excel file.')
+
+status_msg(10, "Initial Checks", "Checking mandatory sheets presence...")
 
 # List of spreadsheet names containing "Sample data"
 # This is to check for cases where workbooks contain more than one Sample data
@@ -243,6 +256,8 @@ for _tbl in [site_tb, entity_tb, ref_tb, dating_tb, dating_lamina_tb, sample_tb]
 # =============================================================================
 # Section 3. Check workbook is the right version
 # =============================================================================
+status_msg(20, "Initial Checks", "Checking workbook version (v15)...")
+
 site_col = set(['site_name', 'latitude', 'longitude', 'elevation', 'monitoring']) - set(site_tb.columns)
 entity_col = set(["entity_name", "one_and_only", "entity_status_info", "entity_status_notes", "geology", "rock_age", "vegetation_type", "land_use", "cover_type", "cover_thickness", "host_rock_trace_elements", "drip_water_trace_elements", "distance_entrance", "speleothem_type", "drip_type", "drip_height", "d13C", "d18O", "iso_std", "d18O_water_equilibrium", "d18O_dripwater_carbonate_difference", "organics", "fluid_inclusions", "mineralogy_petrology_fabric", "clumped_isotopes", "noble_gas_temperatures", "C14", "ODL", "Sr_Ca", "Sr_Ca_method", "Sr_Ca_std", "Sr_Ca_downsampled", "Sr_Ca_downsampling_method", "Mg_Ca", "Mg_Ca_method", "Mg_Ca_std", "Mg_Ca_downsampled", "Mg_Ca_downsampling_method", "Ba_Ca", "Ba_Ca_method", "Ba_Ca_std", "Ba_Ca_downsampled", "Ba_Ca_downsampling_method", "U_Ca", "U_Ca_method", "U_Ca_std", "U_Ca_downsampled", "U_Ca_downsampling_method", "P_Ca", "P_Ca_method", "P_Ca_std", "P_Ca_downsampled", "P_Ca_downsampling_method", "Sr_isotopes", "Sr_isotopes_method", "Sr_isotopes_std", "trace_elements_datafile", "trace_elements_metadatafile", "cave_map", "entity_scan", "contact", "contact_orcid", "data_DOI_URL"]) - set(entity_tb.columns)
 ref_col = set(['entity_name', 'citation', 'publication_DOI']) - set(ref_tb.columns)
@@ -980,6 +995,8 @@ y_n_na_nk_list =['yes', 'no', 'not applicable', 'unknown']
 #Section 7.i. Site spreadsheet 
 # _____________________________________________________________________________
 #
+status_msg(25, "Data Validation", "Validating Site metadata...")
+
 # Check that the site table has one and only one record
 if len(site_tb.index) != 1:
     fatal('Site metadata table is either empty or has more than one site. Exactly one site per workbook is allowed.', workbook_location='Site metadata')
@@ -1059,6 +1076,7 @@ else:
 # -----------------------------------------------------------------------------
 # Section 7.ii.a. Checks for all entities
 # -----------------------------------------------------------------------------
+status_msg(40, "Data Validation", "Validating Entity metadata...")
 
 #Check that table has records
 if len(entity_tb.index) == 0:
@@ -1408,6 +1426,8 @@ else:
 # -----------------------------------------------------------------------------
 # Section 7.iii Sample spreadsheet   
 # -----------------------------------------------------------------------------
+status_msg(60, "Data Validation", "Validating Sample data and Hiatuses...")
+
 if len(sample_tb.index) == 0:
     fatal('Sample_data tab: There are no smples filled in. The checks will terminate here.', workbook_location='Sample data')
 
@@ -1848,6 +1868,8 @@ for i in entity_tb.index:
 # -----------------------------------------------------------------------------
 # Section 7.iii.d. Dating spreadsheet
 # -----------------------------------------------------------------------------
+status_msg(80, "Data Validation", "Validating Dating information...")
+
 if len(dating_tb.index) > 0:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # 7.iii.c.1. Check on dating table (full) 
@@ -2448,6 +2470,8 @@ if warning_ctr < 1:
 # =============================================================================
 # Section 10. Generate site location map
 # =============================================================================
+status_msg(95, "Map Generation", "Generating regional site map...")
+
 try:
     span = 15  # degrees on each side of the site
     map_outfile = os.path.join(output_dir, 'map_' + os.path.splitext(xls)[0] + '.png')
@@ -2482,4 +2506,4 @@ try:
 except Exception as e:
     warning('could not generate site map (%s)' % str(e))
 
-
+status_msg(100, "Finalization", "Saving QC log and generating final report...")

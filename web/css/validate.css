@@ -94,3 +94,21 @@
 .row-warning > td { background-color: #fef08a !important; color: #854d0e !important; } /* Yellow */
 .row-error > td { background-color: #fca5a5 !important; color: #7f1d1d !important; } /* Red */
 .row-fatal > td { background-color: #991b1b !important; color: #ffffff !important; font-weight: 500; } /* Dark Red */
+
+/* ==================================================== */
+/* Status Log Container Scrollbar (Custom)              */
+/* ==================================================== */
+#status-log-container::-webkit-scrollbar {
+    width: 6px;
+}
+#status-log-container::-webkit-scrollbar-track {
+    background: #f8f9fa; 
+    border-radius: 4px;
+}
+#status-log-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1; 
+    border-radius: 4px;
+}
+#status-log-container::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8; 
+}
