@@ -8,7 +8,7 @@ pandas
 numpy
 openpyxl
 xlrd
-matplotlib
+matplotlib<3.11.0
 cartopy
 shapely
 

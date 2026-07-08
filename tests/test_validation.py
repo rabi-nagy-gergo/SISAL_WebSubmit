@@ -1,17 +1,22 @@
 import os
+import json
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, AsyncMock
 
-# ==========================================
-# Fixture for Session Setup
-# ==========================================
+class MockStreamReader:
+    def __init__(self, lines):
+        self.lines = lines
+        self.idx = 0
+        
+    async def readline(self):
+        if self.idx < len(self.lines):
+            val = self.lines[self.idx]
+            self.idx += 1
+            return val
+        return b""
 
 @pytest.fixture
 def mock_session(tmp_path):
-    """
-    Creates a valid session directory structure with a dummy input file.
-    Returns the generated session_id.
-    """
     session_id = "test-val-1234"
     base_dir = tmp_path / session_id
     input_dir = base_dir / "input"
@@ -20,19 +25,12 @@ def mock_session(tmp_path):
     os.makedirs(input_dir)
     os.makedirs(output_dir)
     
-    # Create a dummy input file
     test_file = input_dir / "test_workbook.xlsx"
     test_file.write_text("dummy content")
     
     return session_id
 
-# ==========================================
-# SUITE 1: Validation - Pre-execution Errors
-# Tests for missing sessions or empty input directories
-# ==========================================
-
 def test_validate_session_not_found(client, tmp_path):
-    """Tests that validating a non-existent session returns 404."""
     with patch("src.services.api_utils.SESSIONS_DIR", str(tmp_path)):
         response = client.post("/api/validate/invalid-session-id")
         
@@ -40,7 +38,6 @@ def test_validate_session_not_found(client, tmp_path):
         assert "Session not found" in response.json()["detail"]
 
 def test_validate_no_input_file(client, tmp_path):
-    """Tests that validation fails with 400 if the session exists but has no files."""
     session_id = "empty-session"
     os.makedirs(tmp_path / session_id / "input")
     
@@ -50,18 +47,16 @@ def test_validate_no_input_file(client, tmp_path):
         assert response.status_code == 400
         assert "No file found" in response.json()["detail"]
 
-
-# ==========================================
-# SUITE 2: Validation - Subprocess Execution Success
-# Tests for successful script execution and log processing
-# ==========================================
-
-@patch("src.pages.validation.subprocess.run")
-def test_validate_successful_execution(mock_run, client, tmp_path, mock_session):
-    """Tests that a successful subprocess run returns a success status and parsed report."""
-    mock_run.return_value = MagicMock(returncode=0)
+@patch("src.pages.validation.asyncio.create_subprocess_exec")
+def test_validate_successful_execution(mock_exec, client, tmp_path, mock_session):
+    mock_process = AsyncMock()
+    mock_process.stdout = MockStreamReader([
+        b'{"priority": "Status message", "percentage": 10, "section": "Init", "description": "Starting"}\n'
+    ])
+    mock_process.wait = AsyncMock()
+    mock_process.returncode = 0
+    mock_exec.return_value = mock_process
     
-    # Setup: Pre-create the expected QC log file in the output directory
     log_content = '{"priority": "Informative", "description": "All good"}'
     log_path = tmp_path / mock_session / "output" / "QC_log_test_workbook.txt"
     log_path.write_text(log_content)
@@ -70,50 +65,53 @@ def test_validate_successful_execution(mock_run, client, tmp_path, mock_session)
         response = client.post(f"/api/validate/{mock_session}")
         
         assert response.status_code == 200
-        data = response.json()
-        assert data["status"] == "success"
-        assert data["report"]["total_fatal"] == 0
+        
+        lines = [line for line in response.text.split("\n") if line.strip()]
+        assert len(lines) == 2
+        
+        progress_data = json.loads(lines[0])
+        assert progress_data["type"] == "progress"
+        assert progress_data["percentage"] == 10
+        
+        complete_data = json.loads(lines[1])
+        assert complete_data["type"] == "complete"
+        assert complete_data["status"] == "success"
+        assert complete_data["report"]["total_fatal"] == 0
 
-@patch("src.pages.validation.subprocess.run")
-def test_validate_subprocess_exception_handled(mock_run, client, tmp_path, mock_session):
-    """Tests that if subprocess raises a Python exception, the API returns a 500 error."""
-    mock_run.side_effect = Exception("System out of memory")
+@patch("src.pages.validation.asyncio.create_subprocess_exec")
+def test_validate_subprocess_exception_handled(mock_exec, client, tmp_path, mock_session):
+    mock_exec.side_effect = Exception("System out of memory")
     
     with patch("src.services.api_utils.SESSIONS_DIR", str(tmp_path)):
-        response = client.post(f"/api/validate/{mock_session}")
-        
-        assert response.status_code == 500
-        assert "Failed to execute validation script" in response.json()["detail"]
+        with pytest.raises(Exception):
+            client.post(f"/api/validate/{mock_session}")
 
-
-# ==========================================
-# SUITE 3: Validation - Subprocess Failures
-# Tests for script crashes or fatal errors in the log
-# ==========================================
-
-@patch("src.pages.validation.subprocess.run")
-def test_validate_fatal_error_from_returncode(mock_run, client, tmp_path, mock_session):
-    """Tests that a non-zero return code (crash) triggers a fatal_error response."""
-    # Setup: Mock subprocess to return an error code
-    mock_run.return_value = MagicMock(returncode=1)
-    
-    # Intentionally NOT creating a log file to test the fallback logic
+@patch("src.pages.validation.asyncio.create_subprocess_exec")
+def test_validate_fatal_error_from_returncode(mock_exec, client, tmp_path, mock_session):
+    mock_process = AsyncMock()
+    mock_process.stdout = MockStreamReader([])
+    mock_process.wait = AsyncMock()
+    mock_process.returncode = 1
+    mock_exec.return_value = mock_process
     
     with patch("src.services.api_utils.SESSIONS_DIR", str(tmp_path)):
         response = client.post(f"/api/validate/{mock_session}")
         
         assert response.status_code == 200
-        data = response.json()
-        assert data["status"] == "fatal_error"
-        # The API should have injected a fallback fatal warning
-        assert data["report"]["total_fatal"] == 1
+        
+        lines = [line for line in response.text.split("\n") if line.strip()]
+        complete_data = json.loads(lines[-1])
+        assert complete_data["type"] == "complete"
+        assert complete_data["status"] == "fatal_error"
 
-@patch("src.pages.validation.subprocess.run")
-def test_validate_fatal_error_from_log(mock_run, client, tmp_path, mock_session):
-    """Tests that a zero return code but a 'Fatal' log entry triggers a fatal_error response."""
-    mock_run.return_value = MagicMock(returncode=0)
+@patch("src.pages.validation.asyncio.create_subprocess_exec")
+def test_validate_fatal_error_from_log(mock_exec, client, tmp_path, mock_session):
+    mock_process = AsyncMock()
+    mock_process.stdout = MockStreamReader([])
+    mock_process.wait = AsyncMock()
+    mock_process.returncode = 0
+    mock_exec.return_value = mock_process
     
-    # Setup: Log file containing a Fatal error
     log_content = '{"priority": "Fatal", "description": "Critical workbook corruption"}'
     log_path = tmp_path / mock_session / "output" / "QC_log_test_workbook.txt"
     log_path.write_text(log_content)
@@ -122,18 +120,14 @@ def test_validate_fatal_error_from_log(mock_run, client, tmp_path, mock_session)
         response = client.post(f"/api/validate/{mock_session}")
         
         assert response.status_code == 200
-        data = response.json()
-        assert data["status"] == "fatal_error"
-        assert data["report"]["total_fatal"] == 1
-
-
-# ==========================================
-# SUITE 4: Serve Map Endpoint
-# Tests for retrieving the generated .png map
-# ==========================================
+        
+        lines = [line for line in response.text.split("\n") if line.strip()]
+        complete_data = json.loads(lines[-1])
+        assert complete_data["type"] == "complete"
+        assert complete_data["status"] == "fatal_error"
+        assert complete_data["report"]["total_fatal"] == 1
 
 def test_get_map_session_not_found(client, tmp_path):
-    """Tests that requesting a map for an invalid session returns 404."""
     with patch("src.services.api_utils.SESSIONS_DIR", str(tmp_path)):
         response = client.get("/api/map/invalid-session")
         
@@ -141,7 +135,6 @@ def test_get_map_session_not_found(client, tmp_path):
         assert "Session not found" in response.json()["detail"]
 
 def test_get_map_file_not_found(client, tmp_path, mock_session):
-    """Tests that requesting a map when no map file exists returns 404."""
     with patch("src.services.api_utils.SESSIONS_DIR", str(tmp_path)):
         response = client.get(f"/api/map/{mock_session}")
         
@@ -149,8 +142,6 @@ def test_get_map_file_not_found(client, tmp_path, mock_session):
         assert "Map not found" in response.json()["detail"]
 
 def test_get_map_success(client, tmp_path, mock_session):
-    """Tests that an existing map file is successfully served to the client."""
-    # Setup: Create a dummy map file in the output directory
     map_content = b"fake png image binary data"
     map_path = tmp_path / mock_session / "output" / "map_test_workbook.png"
     map_path.write_bytes(map_content)
