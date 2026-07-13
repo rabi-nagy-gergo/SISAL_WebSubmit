@@ -38,14 +38,14 @@ jobs:
       - name: Install ruff
         run: pip install ruff
 
-      - name: Run ruff check (src/ only, excluding legacy AutoQC script)
+      - name: Run ruff check
         run: |
-          ruff check src \
+          ruff check src tests \
             --exclude "src/services/wb_check_v15.py"
 
-      - name: Run ruff format check (src/ only, excluding legacy AutoQC script)
+      - name: Run ruff format check
         run: |
-          ruff format --check src \
+          ruff format --check src tests \
             --exclude "src/services/wb_check_v15.py"
 
   # ==========================================
@@ -92,7 +92,7 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       # Speeds up repeated CI runs by caching Docker layers between workflow runs.
-      - name: Run test suite (make test)
+      - name: Run test suite
         run: make test
 
       - name: Upload coverage to Codecov

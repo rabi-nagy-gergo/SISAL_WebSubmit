@@ -17,3 +17,6 @@ pytest
 pytest-asyncio
 pytest-cov
 httpx2
+
+# Linter depedencies
+ruff

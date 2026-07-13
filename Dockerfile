@@ -43,6 +43,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     r-base-core \
     r-cran-ggplot2 \
     r-cran-openxlsx \
+    r-cran-jsonlite \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy and install pre-compiled wheels

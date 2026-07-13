@@ -1,7 +1,8 @@
 import os
-import subprocess
+import json
+import asyncio
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 
 from src.services.api_utils import R_PLOT_SCRIPT_PATH, get_session_paths
 
@@ -26,31 +27,76 @@ async def run_plots(session_id: str):
     env["SISAL_INPUT_DIR"] = os.path.abspath(paths["input"])
     env["SISAL_OUTPUT_DIR"] = os.path.abspath(paths["output"])
 
-    try:
-        result = subprocess.run(
-            ["Rscript", R_PLOT_SCRIPT_PATH, filename],
-            capture_output=True,
-            text=True,
+    # Run the R plotting script.
+    async def generate_response():
+        # Starting subprocess asynchronously
+        process = await asyncio.create_subprocess_exec(
+            "Rscript",
+            R_PLOT_SCRIPT_PATH,
+            filename,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
             env=env,
         )
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to execute R plotting script: {str(e)}"
+
+        # Continuously reading standard output
+        while True:
+            line = await process.stdout.readline()
+            if not line:
+                break
+
+            line_str = line.decode("utf-8").strip()
+            if line_str:
+                try:
+                    msg = json.loads(line_str)
+                    if msg.get("priority") == "Status message":
+                        yield (
+                            json.dumps(
+                                {
+                                    "type": "progress",
+                                    "percentage": msg.get("percentage"),
+                                    "section": msg.get("section"),
+                                    "message": msg.get("description"),
+                                }
+                            )
+                            + "\n"
+                        )
+                except json.JSONDecodeError:
+                    pass
+
+        # Capture stderr for error reporting before waiting on the process,
+        stderr_bytes = await process.stderr.read()
+        await process.wait()
+
+        if process.returncode != 0:
+            stderr_text = (
+                stderr_bytes.decode("utf-8", errors="replace") if stderr_bytes else ""
+            )
+            yield (
+                json.dumps(
+                    {
+                        "type": "complete",
+                        "status": "error",
+                        "message": "R plotting script failed.",
+                        "stderr": stderr_text[-3000:] if stderr_text else "",
+                    }
+                )
+                + "\n"
+            )
+            return
+
+        plot_files = sorted(
+            f
+            for f in os.listdir(paths["output"])
+            if f.startswith("plot_") and f.endswith(".png")
+        )
+        yield (
+            json.dumps({"type": "complete", "status": "success", "plots": plot_files})
+            + "\n"
         )
 
-    if result.returncode != 0:
-        return {
-            "status": "error",
-            "message": "R plotting script failed.",
-            "stderr": result.stderr[-3000:] if result.stderr else "",
-        }
-
-    plot_files = sorted(
-        f
-        for f in os.listdir(paths["output"])
-        if f.startswith("plot_") and f.endswith(".png")
-    )
-    return {"status": "success", "plots": plot_files}
+    # Using StreamingResponse with NDJSON format
+    return StreamingResponse(generate_response(), media_type="application/x-ndjson")
 
 
 @router.get("/api/plots/{session_id}")
