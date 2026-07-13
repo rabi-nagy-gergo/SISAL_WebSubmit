@@ -55,3 +55,21 @@
     text-align: center;
     background-color: #ede9fe;
 }
+
+/* ==================================================== */
+/* Status Log Container Scrollbar           */
+/* ==================================================== */
+#plots-status-log-container::-webkit-scrollbar {
+    width: 6px;
+}
+#plots-status-log-container::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+#plots-status-log-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+#plots-status-log-container::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}

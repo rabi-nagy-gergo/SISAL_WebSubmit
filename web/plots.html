@@ -22,8 +22,17 @@
                     </div>
 
                     <div id="plots-spinner" class="text-center py-4 py-md-5">
-                        <div class="spinner-border text-primary" role="status"></div>
-                        <p class="mt-3">Running R plotting script... Please wait.</p>
+                        <h5 id="plots-progress-text" class="text-primary mb-3">Running R plotting script...</h5>
+                        <div class="progress" style="height: 25px; border-radius: 12.5px;">
+                            <div id="plots-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                0%
+                            </div>
+                        </div>
+
+                        <div id="plots-status-log-container" class="d-none mt-4 text-start border rounded-3 p-4 bg-white shadow-sm mx-auto" style="max-width: 850px; max-height: 350px; overflow-y: auto;">
+                        </div>
+
+                        <p class="text-muted mt-4 small">Please wait while the plots are being generated. Do not close this page.</p>
                     </div>
 
                     <div id="plots-results" class="d-none">

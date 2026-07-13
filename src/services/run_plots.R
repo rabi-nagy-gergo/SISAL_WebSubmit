@@ -16,6 +16,29 @@ if (length(args) == 0) {
 }
 xls <- args[1]
 
+library(openxlsx)
+library(ggplot2)
+library(jsonlite)
+
+# ==========================================
+# Status message helper (mirrors wb_check_v15.py's status_msg)
+# Emits a single-line JSON object to stdout.
+# The backend reads stdout line by line and forwards these
+# as NDJSON "progress" events to the frontend.
+# ==========================================
+status_msg <- function(percentage, section, description) {
+  record <- list(
+    priority = "Status message",
+    percentage = percentage,
+    section = trimws(section),
+    description = trimws(description)
+  )
+  cat(jsonlite::toJSON(record, auto_unbox = TRUE), "\n", sep = "")
+  flush(stdout())
+}
+
+status_msg(5, "Initialization", "Reading Excel workbook and preparing plotting environment...")
+
 # Paths — env vars take priority (web mode); fall back to local defaults
 input_dir_env  <- Sys.getenv("SISAL_INPUT_DIR",  unset = "")
 output_dir_env <- Sys.getenv("SISAL_OUTPUT_DIR", unset = "")
@@ -33,9 +56,6 @@ if (length(file_arg) > 0) {
 } else {
   source("plot_agemodels_hiatus.R")
 }
-
-library(openxlsx)
-library(ggplot2)
 
 # Helper: infer depth_ref from data (mirrors Python auto-detection)
 infer_depth_ref <- function(entity_name, sample_tb) {
@@ -94,11 +114,29 @@ plot_agemodels_hiatus <- function(input_file, output_dir) {
 
   entity_name_list <- unique(entity_tb$entity_name)
   entity_name_list <- entity_name_list[!is.na(entity_name_list)]
+
+  status_msg(20, "Data Preparation", "Workbook loaded and cleaned; preparing per-entity plots...")
+
+  # Progress budget: entities are plotted across the 20-90% range, split
+  # evenly across however many entities the workbook contains.
+  entity_count <- length(entity_name_list)
+  progress_start <- 20
+  progress_end <- 90
+  progress_span <- if (entity_count > 0) (progress_end - progress_start) / entity_count else 0
+
   grp_ctr <- 1
   p_temp <- ggplot() + theme_bw() +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
   for (i in entity_name_list) {
+    entity_idx <- match(i, entity_name_list)
+    entity_progress <- round(progress_start + (entity_idx - 1) * progress_span)
+    status_msg(
+      entity_progress,
+      "Plot Generation",
+      paste0("Generating plots for entity ", entity_idx, " of ", entity_count, ": ", i, "...")
+    )
+
     writeLines(paste0("Processing entity: ", i))
     entity_name              <- i
     speleothem_type          <- entity_tb$speleothem_type[entity_tb$entity_name == i]
@@ -286,6 +324,8 @@ plot_agemodels_hiatus <- function(input_file, output_dir) {
       writeLines(paste0("  -> saved: ", png_file))
     }
   }
+
+  status_msg(100, "Finalization", "All entity plots generated and saved.")
 }
 
 # ---- run --------------------------------------------------------------------

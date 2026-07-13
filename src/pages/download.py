@@ -1,7 +1,9 @@
-import os
 import json
+import os
 import shutil
+import zipfile
 from datetime import datetime, timedelta
+
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
@@ -20,17 +22,66 @@ async def download_results(session_id: str):
         raise HTTPException(status_code=404, detail="Session not found or expired.")
 
     output_dir = paths["output"]
-    if not os.listdir(output_dir):
+    input_dir = paths["input"]
+
+    if not os.path.exists(output_dir) or not os.listdir(output_dir):
         raise HTTPException(
             status_code=400, detail="No output files available to download."
         )
 
-    # Creating ZIP file in session's root.
-    zip_path = os.path.join(paths["base"], f"SISAL_QC_Results_{session_id}")
-    shutil.make_archive(zip_path, "zip", output_dir)
+    zip_path = os.path.join(paths["base"], f"SISAL_QC_Results_{session_id}.zip")
+
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+        if os.path.exists(input_dir):
+            for f in os.listdir(input_dir):
+                if f.endswith(".xlsx"):
+                    zipf.write(os.path.join(input_dir, f), arcname=f)
+
+        if os.path.exists(output_dir):
+            for f in os.listdir(output_dir):
+                if f.endswith(".pdf"):
+                    zipf.write(os.path.join(output_dir, f), arcname=f)
+                elif f.startswith("map_") and f.endswith(".png"):
+                    zipf.write(os.path.join(output_dir, f), arcname=f)
+
+            log_files = [
+                f
+                for f in os.listdir(output_dir)
+                if f.startswith("QC_log_") and f.endswith(".txt")
+            ]
+            if log_files:
+                original_log_filename = log_files[0]
+                raw_log_path = os.path.join(output_dir, original_log_filename)
+                with open(raw_log_path, "r", encoding="utf-8") as f:
+                    lines = f.readlines()
+
+                readable_lines = [
+                    "==========================================================\n",
+                    " SISAL AutoQC Validation Report\n",
+                    "==========================================================\n\n",
+                ]
+
+                for line in lines:
+                    try:
+                        data = json.loads(line)
+                        if data.get("priority") not in [
+                            "Status",
+                            "Status message",
+                            None,
+                        ]:
+                            prio = data.get("priority").upper()
+                            loc = data.get("workbook_location")
+                            desc = data.get("description")
+
+                            loc_str = f"[{loc}] " if loc else ""
+                            readable_lines.append(f"{prio}: {loc_str}{desc}\n")
+                    except json.JSONDecodeError:
+                        pass
+
+                zipf.writestr(original_log_filename, "".join(readable_lines))
 
     return FileResponse(
-        path=f"{zip_path}.zip",
+        path=zip_path,
         filename="SISAL_QC_Results.zip",
         media_type="application/zip",
     )
