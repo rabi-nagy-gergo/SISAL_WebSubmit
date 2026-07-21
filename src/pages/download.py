@@ -13,8 +13,43 @@ router = APIRouter()
 
 
 # ==========================================
+# Helpers
+# ==========================================
+
+
+def generate_readable_report(raw_log_path: str) -> str:
+    """Reads the raw JSON QC log and formats it into a human-readable text report."""
+    with open(raw_log_path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    readable_lines = [
+        "==========================================================\n",
+        " SISAL AutoQC Validation Report\n",
+        "==========================================================\n\n",
+    ]
+
+    for line in lines:
+        line = line.strip()
+        try:
+            data = json.loads(line)
+            if data.get("priority") not in ["Status", "Status message", None]:
+                prio = data.get("priority").upper()
+                loc = data.get("workbook_location")
+                desc = data.get("description")
+
+                loc_str = f"[{loc}] " if loc else ""
+                readable_lines.append(f"{prio}: {loc_str}{desc}\n")
+        except json.JSONDecodeError:
+            pass
+
+    return "".join(readable_lines)
+
+
+# ==========================================
 # Download results
 # ==========================================
+
+
 @router.get("/api/download/{session_id}")
 async def download_results(session_id: str):
     paths = get_session_paths(session_id)
@@ -32,11 +67,13 @@ async def download_results(session_id: str):
     zip_path = os.path.join(paths["base"], f"SISAL_QC_Results_{session_id}.zip")
 
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+        # 1. Add input files
         if os.path.exists(input_dir):
             for f in os.listdir(input_dir):
                 if f.endswith(".xlsx"):
                     zipf.write(os.path.join(input_dir, f), arcname=f)
 
+        # 2. Add output files (PDFs and Maps)
         if os.path.exists(output_dir):
             for f in os.listdir(output_dir):
                 if f.endswith(".pdf"):
@@ -44,41 +81,19 @@ async def download_results(session_id: str):
                 elif f.startswith("map_") and f.endswith(".png"):
                     zipf.write(os.path.join(output_dir, f), arcname=f)
 
+            # 3. Add generated human-readable report
             log_files = [
                 f
                 for f in os.listdir(output_dir)
                 if f.startswith("QC_log_") and f.endswith(".txt")
             ]
+
             if log_files:
                 original_log_filename = log_files[0]
                 raw_log_path = os.path.join(output_dir, original_log_filename)
-                with open(raw_log_path, "r", encoding="utf-8") as f:
-                    lines = f.readlines()
 
-                readable_lines = [
-                    "==========================================================\n",
-                    " SISAL AutoQC Validation Report\n",
-                    "==========================================================\n\n",
-                ]
-
-                for line in lines:
-                    try:
-                        data = json.loads(line)
-                        if data.get("priority") not in [
-                            "Status",
-                            "Status message",
-                            None,
-                        ]:
-                            prio = data.get("priority").upper()
-                            loc = data.get("workbook_location")
-                            desc = data.get("description")
-
-                            loc_str = f"[{loc}] " if loc else ""
-                            readable_lines.append(f"{prio}: {loc_str}{desc}\n")
-                    except json.JSONDecodeError:
-                        pass
-
-                zipf.writestr(original_log_filename, "".join(readable_lines))
+                readable_report = generate_readable_report(raw_log_path)
+                zipf.writestr(original_log_filename, readable_report)
 
     return FileResponse(
         path=zip_path,
@@ -90,6 +105,8 @@ async def download_results(session_id: str):
 # ==========================================
 # Session handler endpoints (using cookies)
 # ==========================================
+
+
 @router.post("/api/session/{session_id}/save")
 async def save_session(session_id: str):
     paths = get_session_paths(session_id)
