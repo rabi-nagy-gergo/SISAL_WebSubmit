@@ -8,6 +8,33 @@ Created on Tue Apr 25 14:30:18 2017
 
 Codes check the workbooks and inform the uploader of the checks
 
+21 July 2026 (G)
+    - Communication/output layer refactor: reworded and restructured informative/warning/error/fatal messages throughout for clarity and consistency.
+    - Fixed bug: file-reading try/except blocks used to catch all exceptions silently; now catch specific exception types (FileNotFoundError, PermissionError, ValueError)
+    - Fixed bug: check_hiatusgaps_columns used 'hiatus_check[i] == False' style boolean indexing
+        (equivalent to Python's 'not' on a Series), which raises ValueError for any column with more than one row. 
+        Changed to '~hiatus_check[i]' for correct elementwise negation.
+    - Fixed bug: lat_and_lon check summed check_no_values() for 'latitude' twice instead of once for 'latitude' and once for 'longitude'.
+    - Fixed bug: dating_tb.chem_year had a stray NaN-to-empty-string replace (correct for text columns, but chem_year is numeric), 
+        causing check_numbers() to wrongly flag every row with a blank chem_year. Removed the replace for this column.
+    - Fixed bug: DOI/citation duplicate-check try/except caught all exceptions and reused a generic message. Narrowed to except TypeError.
+    - Fixed bug: reference row validation warning was missing a %s placeholder for rownumber while still passing it as a format argument.
+    - Added workbook_location to several warning/fatal calls that previously omitted it.
+    - Split the combined 'unknown' value summary (site/entity/dating/sample counts) into separate informative() calls per table.
+    - Removed the legacy composites-checking section (previously fully commented out)
+    - Renamed check_independent_dependent_col_silent: dropped the unused table_name parameter (was never used in the function body)
+    - Cosmetic/naming only: _script_location → script_location, _strip_table → strip_table, tablename → table_name (all call sites updated), 
+        local 'warning' boolean variables → 'has_warning' to stop shadowing the warning() function, hardcoded column-name sets → named expected_*_cols variables, 
+        minor variable renames (e.g. l → current_pair), na_rm == True / == False simplified to plain truthiness checks.
+
+June 2026 (G)
+    - Refactored script from a local CLI-driven tool to a web-server compatible architecture.
+    - Replaced hardcoded local directory paths ('Filled_SISAL_Workbook_v15' and 'Output') with dynamically injected environment variables 
+        (SISAL_INPUT_DIR and SISAL_OUTPUT_DIR) to handle file system parameters on the web server.
+    - Converted standard text-based stdout print() statements into structured JSON strings.
+    - Introduced specific JSON message payloads (e.g., utilizing keys like "priority", "percentage", "section", and "description") 
+        to enable real-time asynchronous parsing and NDJSON streaming by the backend via subprocess().
+
 April 2025 (E, L)
     - CLI-driven: takes path and filename as sys.argv arguments
     - Removed all modern_reference checks (column dropped in v15)
