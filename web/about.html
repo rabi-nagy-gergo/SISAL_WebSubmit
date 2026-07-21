@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - SISAL Web Submit</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body class="bg-light d-flex flex-column min-vh-100">
+
+<div class="container py-4 py-md-5 flex-grow-1">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            
+            <div class="text-center mb-4">
+                <h2 class="fw-bold">About the Project</h2>
+            </div>
+
+            <div class="card shadow-sm border-0 rounded-3 mb-5">
+                <div class="card-header bg-primary text-white fw-bold d-flex align-items-center py-3 rounded-top">
+                    <i class="bi bi-file-earmark-code-fill me-2 fs-5"></i> Project Information
+                </div>
+                
+                <div class="card-body p-4 p-md-5">
+                    
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h4 class="text-primary fw-bold mb-0">SISAL Web Submit</h4>
+                        <a href="https://github.com/rabi-nagy-gergo/SISAL_WebSubmit" target="_blank" class="btn btn-outline-dark btn-sm fw-bold">
+                            <i class="bi bi-github me-1"></i> Project Repository
+                        </a>
+                    </div>
+                    
+                    <p class="text-muted mb-4">
+                        The SISAL Web Submit project transforms an existing local data submission workflow into an interactive web application designed for uploading, 
+                        auditing, and validating speleothem data. The SISAL speleothem database is one of the largest databases of its kind in the world. 
+                        This application automates the validation process by providing a user-friendly interface connected to a stateless, file-system-based FastAPI backend.
+                    </p>
+                    
+                    <h5 class="mb-3 border-bottom pb-2">Submission Workflow</h5>
+                    <ul class="text-muted mb-4 list-group list-group-flush border-0">
+                        <li class="list-group-item bg-transparent px-0 border-0 mb-2 d-flex align-items-start">
+                            <i class="bi bi-1-circle-fill text-primary fs-4 me-3" style="line-height: 1;"></i>
+                            <div>
+                                <strong>File Upload:</strong> 
+                                The contributor fills out the provided Excel workbook template with their speleothem sample data 
+                                and uploads it through the web interface.
+                            </div>
+                        </li>
+                        <li class="list-group-item bg-transparent px-0 border-0 mb-2 d-flex align-items-start">
+                            <i class="bi bi-2-circle-fill text-primary fs-4 me-3" style="line-height: 1;"></i>
+                            <div>
+                                <strong>Validation (AutoQC):</strong> 
+                                The FastAPI backend executes a Python QC script (<code>wb_check_v15.py</code>) to validate the workbook's content and structure. 
+                                This script generates a QC log, a regional site map, and a QC-passed copy of the workbook if no structural or logical errors are found.
+                            </div>
+                        </li>
+                        <li class="list-group-item bg-transparent px-0 border-0 mb-2 d-flex align-items-start">
+                            <i class="bi bi-3-circle-fill text-primary fs-4 me-3" style="line-height: 1;"></i>
+                            <div>
+                                <strong>Age-Model & Proxy Plotting:</strong> 
+                                An R plotting script (<code>run_plots.R</code>) is executed to generate a PDF for each entity containing age models, 
+                                potential hiatuses, and proxy time-series plots.
+                            </div>
+                        </li>
+                        <li class="list-group-item bg-transparent px-0 border-0 mb-2 d-flex align-items-start">
+                            <i class="bi bi-4-circle-fill text-primary fs-4 me-3" style="line-height: 1;"></i>
+                            <div>
+                                <strong>Download and Finalization:</strong> 
+                                The contributor can download a <code>.zip</code> archive containing the validated Excel file and the PDF plots. 
+                                The validated data and documentation are then manually forwarded to a SISAL Data Steward.
+                            </div>
+                        </li>
+                    </ul>
+
+                    <h5 class="mb-3 border-bottom pb-2">Architecture & Environment</h5>
+                    <ul class="text-muted mb-4 list-group list-group-flush">
+                        <li class="list-group-item bg-transparent px-0 border-0 py-1">
+                            <i class="bi bi-check2 text-success me-2"></i>
+                            Session management allows users to safely save their progress and resume the upload process within a 1-week window.
+                        </li>
+                        <li class="list-group-item bg-transparent px-0 border-0 py-1">
+                            <i class="bi bi-check2 text-success me-2"></i>
+                            Strict data privacy is enforced by retaining uploaded data for a maximum of 1 week, after which all files are automatically and permanently deleted.
+                        </li>
+                        <li class="list-group-item bg-transparent px-0 border-0 py-1">
+                            <i class="bi bi-check2 text-success me-2"></i>
+                            Full Docker integration ensures smooth development and deployment by containing all necessary 
+                            software packages and dependencies in a single, unified environment.
+                        </li>
+                        <li class="list-group-item bg-transparent px-0 border-0 py-1">
+                            <i class="bi bi-check2 text-success me-2"></i>
+                            The web interface completely eliminates the need for users to manually install and maintain local software packages 
+                            previously required for the data submission workflow.
+                        </li>
+                        <li class="list-group-item bg-transparent px-0 border-0 py-1">
+                            <i class="bi bi-check2 text-success me-2"></i>
+                            The application guarantees compatibility by always supporting and validating the most up-to-date SISAL Excel workbook format.
+                        </li>
+                    </ul>
+
+                    <h5 class="mb-3 border-bottom pb-2">Technology Stack</h5>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <span class="badge bg-primary p-2 fs-7">Python</span>
+                        <span class="badge bg-success p-2 fs-7">FastAPI</span>
+                        <span class="badge bg-info text-dark p-2 fs-7">R</span>
+                        <span class="badge bg-warning text-dark p-2 fs-7">Vanilla JS & HTML</span>
+                        <span class="badge bg-secondary p-2 fs-7">Bootstrap 5</span>
+                        <span class="badge bg-dark p-2 fs-7">Docker</span>
+                    </div>
+
+                    <ul class="text-muted list-unstyled">
+                        <li class="mb-2"><strong>Data Validation (Python):</strong> Requires 
+                            <code>pandas</code>, <code>numpy</code>, <code>openpyxl</code>, <code>xlrd</code>, 
+                            <code>matplotlib</code>, <code>cartopy</code>, and <code>shapely</code>.
+                        </li>
+                        <li><strong>Plotting (R):</strong> Requires 
+                            <code>openxlsx</code> and <code>ggplot2</code>.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 rounded-3 mb-4" id="aboutme">
+                <div class="card-header bg-primary text-white fw-bold d-flex align-items-center py-3 rounded-top">
+                    <i class="bi bi-person-bounding-box me-2 fs-5"></i> About the Developer
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    
+                    <div class="mb-4">
+                        <h4 class="fw-bold text-dark mb-1">Gergő Rabi-Nagy</h4>
+                        <p class="text-muted mb-2">Software Developer / Full-Stack Engineer</p>
+                        <div class="d-flex gap-3">
+                            <a href="mailto:rabi.nagy.gergo@gmail.com" class="text-decoration-none text-danger small fw-bold">
+                                <i class="bi bi-envelope-fill me-1"></i> Email
+                            </a>
+                            <a href="https://github.com/rabi-nagy-gergo" target="_blank" class="text-decoration-none text-secondary small fw-bold">
+                                <i class="bi bi-github me-1"></i> GitHub
+                            </a>
+                            <a href="https://www.linkedin.com/in/gergo-rabi-nagy" target="_blank" class="text-decoration-none text-primary small fw-bold">
+                                <i class="bi bi-linkedin me-1"></i> LinkedIn
+                            </a>
+                        </div>
+                    </div>
+
+                    <p class="text-muted text-justify">
+                        I am Gergő Rabi-Nagy, a Software Developer with a BSc in Computer Science. I possess solid knowledge in software design, 
+                        developing complex multi-layer applications, and applying object-oriented and functional design patterns. 
+                        I am characterized by a strong algorithmic and problem-solving mindset.
+                    </p>
+                    <p class="text-muted text-justify">
+                        During the implementation of my projects, I pay special attention to Clean Code principles, the strict server-side protection of business logic, 
+                        and robust, fault-tolerant database operations. My goal is to provide platforms that minimize administrative burdens 
+                        while guaranteeing full transparency and auditability.
+                    </p>
+
+                    <div class="text-center mt-5">
+                        <a href="index.html" class="btn btn-outline-primary px-4">Return to Home</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- LÁBLÉC -->
+<footer class="mt-auto py-2 bg-dark text-light">
+    <div class="container d-flex justify-content-between align-items-center small">
+        
+        <div class="text-start" style="flex: 1;">
+            <a href="about.html" class="btn btn-outline-light btn-sm">About this project</a>
+        </div>
+        
+        <div class="text-center" style="flex: 1;">
+            &copy; 2026 SISAL Web Submit<br>
+            <span class="text-white-50">For v15.0 excel workbooks</span>
+        </div>
+        
+        <div class="text-end" style="flex: 1;">
+            Developed by: <strong>Gergő Rabi-Nagy</strong>
+        </div>
+        
+    </div>
+</footer>    
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
