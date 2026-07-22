@@ -169,7 +169,7 @@ def test_validate_fatal_error_from_returncode(
         lines = [line for line in response.text.split("\n") if line.strip()]
         complete_data = json.loads(lines[-1])
         assert complete_data["type"] == "complete"
-        assert complete_data["status"] == "fatal_error"
+        assert complete_data["status"] == "error"
 
 
 @patch("src.pages.validation.asyncio.create_subprocess_exec")
@@ -192,7 +192,7 @@ def test_validate_fatal_error_from_log(mock_exec, client, tmp_path, mock_session
         lines = [line for line in response.text.split("\n") if line.strip()]
         complete_data = json.loads(lines[-1])
         assert complete_data["type"] == "complete"
-        assert complete_data["status"] == "fatal_error"
+        assert complete_data["status"] == "error"
         assert complete_data["report"]["total_fatal"] == 1
 
 

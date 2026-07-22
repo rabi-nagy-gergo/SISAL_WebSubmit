@@ -15,8 +15,10 @@ def test_parse_qc_log_empty():
     assert result["total_errors"] == 0
     assert result["total_fatal"] == 0
     assert result["is_passed"] is True
-    assert len(result["informative_messages"]) == 0
+    assert len(result["informative"]) == 0
     assert len(result["warnings"]) == 0
+    assert len(result["errors"]) == 0
+    assert len(result["fatals"]) == 0
 
 
 def test_parse_qc_log_informative_only():
@@ -28,8 +30,8 @@ def test_parse_qc_log_informative_only():
     assert result["total_errors"] == 0
     assert result["total_fatal"] == 0
     assert result["is_passed"] is True
-    assert len(result["informative_messages"]) == 1
-    assert result["informative_messages"][0]["description"] == "All checks passed"
+    assert len(result["informative"]) == 1
+    assert result["informative"][0]["description"] == "All checks passed"
     assert len(result["warnings"]) == 0
 
 
@@ -48,14 +50,14 @@ def test_parse_qc_log_mixed_priorities():
     assert result["total_errors"] == 1
     assert result["total_fatal"] == 1
 
-    # Validation should fail if there are any warnings, errors, or fatals
+    # Validation should fail if there are any errors or fatals
     assert result["is_passed"] is False
 
-    # 1 Informative message expected
-    assert len(result["informative_messages"]) == 1
+    assert len(result["informative"]) == 1
 
-    # The 'warnings' list acts as a catch-all for anything not Informative
-    assert len(result["warnings"]) == 3
+    assert len(result["warnings"]) == 1
+    assert len(result["errors"]) == 1
+    assert len(result["fatals"]) == 1
 
 
 def test_parse_qc_log_invalid_json_fallback():
@@ -65,7 +67,8 @@ def test_parse_qc_log_invalid_json_fallback():
 
     assert result["total_warnings"] == 1
     assert result["total_errors"] == 0
-    assert result["is_passed"] is False
+    # Validation passes because warnings do not fail the submission
+    assert result["is_passed"] is True
 
     assert len(result["warnings"]) == 1
     fallback_warning = result["warnings"][0]
@@ -76,12 +79,31 @@ def test_parse_qc_log_invalid_json_fallback():
     )
 
 
+def test_parse_qc_log_unknown_priority_fallback():
+    """Tests that messages with an unrecognized priority are processed via the fallback branch (treated as Warnings)."""
+    raw_log = (
+        '{"priority": "UnknownLevel", "description": "Something unexpected occurred"}'
+    )
+    result = parse_qc_log_to_json(raw_log)
+
+    assert result["total_warnings"] == 1
+    assert result["total_errors"] == 0
+    assert result["total_fatal"] == 0
+
+    # Validation passes because fallback warnings do not fail the submission
+    assert result["is_passed"] is True
+
+    assert len(result["warnings"]) == 1
+    assert result["warnings"][0]["priority"] == "UnknownLevel"
+    assert result["warnings"][0]["description"] == "Something unexpected occurred"
+
+
 def test_parse_qc_log_empty_lines_ignored():
     """Tests that empty lines or whitespaces are properly skipped by the parser."""
     raw_log = "\n\n" + '{"priority": "Informative", "description": "Test"}' + "\n   \n"
     result = parse_qc_log_to_json(raw_log)
 
-    assert len(result["informative_messages"]) == 1
+    assert len(result["informative"]) == 1
     assert result["is_passed"] is True
 
 

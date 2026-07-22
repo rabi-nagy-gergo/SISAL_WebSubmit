@@ -83,13 +83,17 @@ async def validate_file(session_id: str):
 
         report = parse_qc_log_to_json(raw_log)
 
-        if process.returncode != 0 or report["total_fatal"] > 0:
+        if (
+            process.returncode != 0
+            or report["total_fatal"] > 0
+            or report["total_errors"] > 0
+        ):
             yield (
                 json.dumps(
                     {
                         "type": "complete",
-                        "status": "fatal_error",
-                        "message": "A fatal error occurred during workbook quality check.",
+                        "status": "error",
+                        "message": "Quality check failed: Error or Fatal messages were found.",
                         "report": report,
                     }
                 )
@@ -108,6 +112,8 @@ async def validate_file(session_id: str):
 # ==========================================
 # Serve Generated Map Image
 # ==========================================
+
+
 @router.get("/api/map/{session_id}")
 async def get_map(session_id: str):
     paths = get_session_paths(session_id)
