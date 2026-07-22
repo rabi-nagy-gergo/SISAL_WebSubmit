@@ -8,6 +8,17 @@ Created on Tue Apr 25 14:30:18 2017
 
 Codes check the workbooks and inform the uploader of the checks
 
+22 July 2026 (G)
+    - Introduced a strict separation between critical errors and non-critical warnings by implementing a new error_ctr.
+    - Updated helper function signatures: added a severity parameter (defaulting to 'warning') to 
+        check_no_values, check_numbers, check_positivenumbers, and check_numbers_in_range.
+    - Systematically recategorized numerous validation messages across all sections from 'warning' to 'error' (along with their respective counters) 
+        where data integrity is fundamentally compromised.
+    - Modified the internal logic of several specific helper functions (e.g., check_hiatusgaps_columns, check_entity_names, check_no_repeated_records) 
+        to strictly emit and count errors.
+    - Updated the final workbook export condition: the script now outputs the 'QC_passed' file if error_ctr < 1, 
+        allowing workbooks with only non-critical warnings to successfully pass the QC validation stage.
+
 21 July 2026 (G)
     - Communication/output layer refactor: reworded and restructured informative/warning/error/fatal messages throughout for clarity and consistency.
     - Fixed bug: file-reading try/except blocks used to catch all exceptions silently; now catch specific exception types (FileNotFoundError, PermissionError, ValueError)
@@ -2723,9 +2734,11 @@ for i in entity_tb['entity_name']:
     else:
         warning_ctr += 1
 
+
 # =============================================================================
 # Section 8. Print out the number of unknowns
 # =============================================================================
+
 
 if total_unkwn > 0:
     if site_unkwn > 0:
