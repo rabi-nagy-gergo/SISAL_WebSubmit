@@ -90,9 +90,9 @@ function handleValidationComplete(data, sessionId, config, dom) {
     loadSiteMapImage(sessionId);
 
     const report = data.report;
-    if (data.status === 'success' && report.is_passed && 
-        report.total_warnings === 0 && report.total_errors === 0 && report.total_fatal === 0) {
-        
+    
+    // Allow progression if the file passes validation (allows warnings, but no errors or fatals)
+    if (data.status === 'success' && report.is_passed) {
         dom.btnNext.disabled = false;
         unlockStep(3);
         
@@ -141,51 +141,75 @@ function appendLogMessage(logContainer, list, message) {
 
 function renderReport(data) {
     const alertBox = document.getElementById('status-alert');
-    const report = data.report || { informative_messages: [], warnings: [], total_warnings: 0, total_errors: 0, total_fatal: 0, is_passed: false };
+    const report = data.report || { 
+        informative: [], 
+        warnings: [], 
+        errors: [], 
+        fatals: [], 
+        total_warnings: 0, 
+        total_errors: 0, 
+        total_fatal: 0, 
+        is_passed: false 
+    };
 
-    renderMessageRows(document.getElementById('table-informative').querySelector('tbody'), report.informative_messages, 'Informative', 'No information available.');
-    renderMessageRows(document.getElementById('table-warnings').querySelector('tbody'), report.warnings, 'Warning', 'No warnings or errors to display.');
+    // Render the 4 separate tables
+    renderMessageRows(document.getElementById('table-informative').querySelector('tbody'), report.informative, 'Informative', 'No informative messages.');
+    renderMessageRows(document.getElementById('table-warnings').querySelector('tbody'), report.warnings, 'Warning', 'No warnings to display.');
+    renderMessageRows(document.getElementById('table-errors').querySelector('tbody'), report.errors, 'Error', 'No errors to display.');
+    renderMessageRows(document.getElementById('table-fatals').querySelector('tbody'), report.fatals, 'Fatal', 'No fatal errors to display.');
 
-    if (data.status === 'fatal_error' || report.total_fatal > 0) {
-        alertBox.className = 'alert alert-danger';
-        alertBox.innerHTML = `<strong>Fatal Error!</strong> ${escapeHtml(data.message || 'Validation stopped because a fatal error occurred.')}`;
-        return;
+    const totalErrors = report.total_errors || 0;
+    const totalFatals = report.total_fatal || 0;
+    const totalWarnings = report.total_warnings || 0;
+
+    let iconSvg = '';
+    let title = '';
+    let desc = '';
+    let alertClass = '';
+
+    if (totalErrors > 0 || totalFatals > 0) {
+        alertClass = 'alert-danger';
+        title = 'Validation failed!';
+        desc = `Found ${totalErrors} error(s) and ${totalFatals} fatal issue(s). Please review the tables below and correct your workbook.`;
+        iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-x-octagon-fill" viewBox="0 0 16 16"><path d="M11.46.146A.5.5 0 0 0 11.107 0H4.893a.5.5 0 0 0-.353.146L.146 4.54A.5.5 0 0 0 0 4.893v6.214a.5.5 0 0 0 .146.353l4.394 4.394a.5.5 0 0 0 .353.146h6.214a.5.5 0 0 0 .353-.146l4.394-4.394a.5.5 0 0 0 .146-.353V4.893a.5.5 0 0 0-.146-.353zM8 4c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995A.905.905 0 0 1 8 4m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/></svg>`;
+    } 
+    else if (totalWarnings > 0) {
+        alertClass = 'alert-warning';
+        title = 'Validation successful with warnings!';
+        desc = `Found ${totalWarnings} warning(s). You may proceed, but please review the warnings below.`;
+        iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-exclamation-triangle-fill" viewBox="0 0 16 16"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/></svg>`;
+    } 
+    else {
+        alertClass = 'alert-success';
+        title = 'Validation successful!';
+        desc = 'No issues found. You may proceed to the next step.';
+        iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-check-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>`;
     }
 
-    const blockingIssues = (report.total_warnings || 0) + (report.total_errors || 0) + (report.total_fatal || 0);
-    const isSuccess = report.is_passed && blockingIssues === 0;
-
-    alertBox.className = isSuccess ? 'alert alert-success' : 'alert alert-warning';
-    alertBox.innerHTML = isSuccess
-        ? '<strong>Validation successful!</strong> No errors found.'
-        : `<strong>Warning!</strong> ${blockingIssues} issue(s) found.`;
+    alertBox.className = `alert ${alertClass} d-flex align-items-center shadow-sm`;
+    alertBox.innerHTML = `
+        <div class="me-3 flex-shrink-0">
+            ${iconSvg}
+        </div>
+        <div>
+            <h5 class="fw-bold mb-1">${title}</h5>
+            <p class="mb-0">${desc}</p>
+        </div>
+    `;
 }
 
-function renderMessageRows(tbody, messages, defaultPriority, emptyText, emptyClass = 'text-muted') {
+function renderMessageRows(tbody, messages, defaultPriority, emptyText) {
     tbody.innerHTML = '';
 
     if (!messages || messages.length === 0) {
-        tbody.innerHTML = `<tr class="${defaultPriority === 'Informative' ? '' : 'row-empty'}"><td colspan="4" class="${emptyClass} text-center">${escapeHtml(emptyText)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="text-muted text-center">${escapeHtml(emptyText)}</td></tr>`;
         return;
     }
 
     messages.forEach(message => {
         const msg = normalizeMessage(message, defaultPriority);
         
-        let rowClass = '';
-        const priorityLower = msg.priority.toLowerCase();
-        
-        if (priorityLower.includes('fatal')) {
-            rowClass = 'row-fatal';
-        } 
-        else if (priorityLower.includes('error')) {
-            rowClass = 'row-error';
-        } 
-        else if (priorityLower.includes('warning')) {
-            rowClass = 'row-warning';
-        }
-        
-        tbody.innerHTML += `<tr class="${rowClass}">
+        tbody.innerHTML += `<tr>
             <td>${escapeHtml(msg.priority)}</td>
             <td>${escapeHtml(msg.description)}</td>
             <td>${escapeHtml(msg.script_location)}</td>

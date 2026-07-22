@@ -64,6 +64,12 @@
                                     <div class="accordion-body p-3">
                                         <div class="table-responsive">
                                             <table class="table table-bordered mb-0" id="table-informative">
+                                                <colgroup>
+                                                    <col style="width: 12%;">
+                                                    <col style="width: 48%;">
+                                                    <col style="width: 20%;">
+                                                    <col style="width: 20%;">
+                                                </colgroup>
                                                 <thead>
                                                     <tr>
                                                         <th>Priority</th>
@@ -79,16 +85,84 @@
                                 </div>
                             </div>
 
-                            <div class="accordion-item border-0 mb-3 rounded panel-danger">
-                                <h2 class="accordion-header" id="headingDanger">
-                                    <button class="accordion-button danger-btn rounded" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDanger" aria-expanded="true" aria-controls="collapseDanger">
-                                        Warnings and Errors
+                            <div class="accordion-item border-0 mb-4 rounded panel-warning">
+                                <h2 class="accordion-header" id="headingWarning">
+                                    <button class="accordion-button warning-btn rounded" type="button" data-bs-toggle="collapse" data-bs-target="#collapseWarning" aria-expanded="true" aria-controls="collapseWarning">
+                                        Warnings
                                     </button>
                                 </h2>
-                                <div id="collapseDanger" class="accordion-collapse collapse show" aria-labelledby="headingDanger">
+                                <div id="collapseWarning" class="accordion-collapse collapse show" aria-labelledby="headingWarning">
                                     <div class="accordion-body p-3">
                                         <div class="table-responsive">
                                             <table class="table table-bordered mb-0" id="table-warnings">
+                                                <colgroup>
+                                                    <col style="width: 12%;">
+                                                    <col style="width: 48%;">
+                                                    <col style="width: 20%;">
+                                                    <col style="width: 20%;">
+                                                </colgroup>
+                                                <thead>
+                                                    <tr>
+                                                        <th>Priority</th>
+                                                        <th>Description</th>
+                                                        <th>Script location</th>
+                                                        <th>Workbook location</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion-item border-0 mb-4 rounded panel-error">
+                                <h2 class="accordion-header" id="headingError">
+                                    <button class="accordion-button error-btn rounded" type="button" data-bs-toggle="collapse" data-bs-target="#collapseError" aria-expanded="true" aria-controls="collapseError">
+                                        Errors
+                                    </button>
+                                </h2>
+                                <div id="collapseError" class="accordion-collapse collapse show" aria-labelledby="headingError">
+                                    <div class="accordion-body p-3">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered mb-0" id="table-errors">
+                                                <colgroup>
+                                                    <col style="width: 12%;">
+                                                    <col style="width: 48%;">
+                                                    <col style="width: 20%;">
+                                                    <col style="width: 20%;">
+                                                </colgroup>
+                                                <thead>
+                                                    <tr>
+                                                        <th>Priority</th>
+                                                        <th>Description</th>
+                                                        <th>Script location</th>
+                                                        <th>Workbook location</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion-item border-0 mb-3 rounded panel-fatal">
+                                <h2 class="accordion-header" id="headingFatal">
+                                    <button class="accordion-button fatal-btn rounded" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFatal" aria-expanded="true" aria-controls="collapseFatal">
+                                        Fatal Errors
+                                    </button>
+                                </h2>
+                                <div id="collapseFatal" class="accordion-collapse collapse show" aria-labelledby="headingFatal">
+                                    <div class="accordion-body p-3">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered mb-0" id="table-fatals">
+                                                <colgroup>
+                                                    <col style="width: 12%;">
+                                                    <col style="width: 48%;">
+                                                    <col style="width: 20%;">
+                                                    <col style="width: 20%;">
+                                                </colgroup>
                                                 <thead>
                                                     <tr>
                                                         <th>Priority</th>
@@ -105,7 +179,7 @@
                             </div>
 
                         </div> 
-                        </div>
+                    </div>
                     
                     <div class="d-flex justify-content-between mt-4 mt-md-5 pt-3 pt-md-4 border-top">
                         <button class="btn btn-outline-secondary btn-lg nav-btn" id="btn-back-1">&larr; Back</button>

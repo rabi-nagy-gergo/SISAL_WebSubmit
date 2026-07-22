@@ -14,10 +14,14 @@ SAVED_SESSION_TIMEOUT_HOURS = float(os.getenv("SAVED_SESSION_TIMEOUT_HOURS", 168
 # ==========================================
 # Helpers
 # ==========================================
+
+
 def parse_qc_log_to_json(raw_log: str) -> dict:
     parsed_data = {
-        "informative_messages": [],
+        "informative": [],
         "warnings": [],
+        "errors": [],
+        "fatals": [],
         "total_warnings": 0,
         "total_errors": 0,
         "total_fatal": 0,
@@ -47,20 +51,23 @@ def parse_qc_log_to_json(raw_log: str) -> dict:
         }
 
         if priority == "Informative":
-            parsed_data["informative_messages"].append(normalized)
-        else:
+            parsed_data["informative"].append(normalized)
+        elif priority == "Warning":
             parsed_data["warnings"].append(normalized)
-            if priority == "Fatal":
-                parsed_data["total_fatal"] += 1
-            elif priority == "Error":
-                parsed_data["total_errors"] += 1
-            else:
-                parsed_data["total_warnings"] += 1
+            parsed_data["total_warnings"] += 1
+        elif priority == "Error":
+            parsed_data["errors"].append(normalized)
+            parsed_data["total_errors"] += 1
+        elif priority == "Fatal":
+            parsed_data["fatals"].append(normalized)
+            parsed_data["total_fatal"] += 1
+        else:
+            # Fallback
+            parsed_data["warnings"].append(normalized)
+            parsed_data["total_warnings"] += 1
 
     parsed_data["is_passed"] = (
-        parsed_data["total_warnings"] == 0
-        and parsed_data["total_errors"] == 0
-        and parsed_data["total_fatal"] == 0
+        parsed_data["total_errors"] == 0 and parsed_data["total_fatal"] == 0
     )
     return parsed_data
 

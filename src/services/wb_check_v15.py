@@ -368,17 +368,17 @@ sample_col = expected_sample_cols - set(sample_tb.columns)
 
 if len(site_col) + len(entity_col) + len(ref_col) + len(date_col) + len(lam_col) + len(sample_col) > 0:
     if len(site_col) > 0:
-        warning('Site metadata table is missing column(s): %s.' % str(list(site_col)), workbook_location='Sheet: Site metadata')
+        error('Site metadata table is missing column(s): %s.' % str(list(site_col)), workbook_location='Sheet: Site metadata')
     if len(entity_col) > 0:
-        warning('Entity metadata table is missing column(s): %s.' % str(list(entity_col)), workbook_location='Sheet: Entity metadata')
+        error('Entity metadata table is missing column(s): %s.' % str(list(entity_col)), workbook_location='Sheet: Entity metadata')
     if len(ref_col) > 0:
-        warning('References table is missing column(s): %s.' % str(list(ref_col)), workbook_location='Sheet: References')
+        error('References table is missing column(s): %s.' % str(list(ref_col)), workbook_location='Sheet: References')
     if len(date_col) > 0:
-        warning('Dating information table is missing column(s): %s.' % str(list(date_col)), workbook_location='Sheet: Dating information')
+        error('Dating information table is missing column(s): %s.' % str(list(date_col)), workbook_location='Sheet: Dating information')
     if len(lam_col) > 0:
-        warning('Lamina age vs depth table is missing column(s): %s.' % str(list(lam_col)), workbook_location='Sheet: Lamina age vs depth')
+        error('Lamina age vs depth table is missing column(s): %s.' % str(list(lam_col)), workbook_location='Sheet: Lamina age vs depth')
     if len(sample_col) > 0:
-        warning('Sample data table is missing column(s): %s' % str(list(sample_col)), workbook_location='Sheet: Sample data')
+        error('Sample data table is missing column(s): %s' % str(list(sample_col)), workbook_location='Sheet: Sample data')
     fatal('This workbook is likely not version 15. Columns in this workbook do not match v15 column schema. The checks cannot be performed.')
     
 
@@ -439,7 +439,7 @@ def check_possible_hiatuses(table, depthcol, agecol, hiatuscol, depth_ref, entit
         table_nohiat.loc[table_nohiat[modrefcol] == 'CE/BCE',agecol] = 1950 - table_nohiat.loc[table_nohiat[modrefcol] == 'CE/BCE',agecol]
     
     if table_nohiat[depthcol].isnull().values.any():
-        warning('Entity %s has samples (not identified as hiatuses) that are missing depths. ' \
+        error('Entity %s has samples (not identified as hiatuses) that are missing depths. ' \
             'Checks for possible hiatuses cannot be performed.' % entity_name, 
             workbook_location='Sheet: Sample data')
         return(1)
@@ -449,8 +449,7 @@ def check_possible_hiatuses(table, depthcol, agecol, hiatuscol, depth_ref, entit
     elif depth_ref == 'from base':
         table_nohiat = table_nohiat.sort_values(by = [depthcol], ascending = False)
     else:
-        warning('The depth_ref chosen is not "from top" or "from base".', 
-            workbook_location='Sheet: Entity metadata')
+        error('The depth_ref chosen is not "from top" or "from base".', workbook_location='Sheet: Entity metadata')
         return(1)
     
     agediff = np.diff(table_nohiat[agecol])
@@ -491,8 +490,7 @@ def check_possible_hiatuses(table, depthcol, agecol, hiatuscol, depth_ref, entit
                     depths = '%s and %s' %(depths, more_depths)
             
             informative('Entity %s has a possible unaccounted hiatus between the following paired %s: %s.' 
-                % (entity_name, depthcol, depths), 
-                workbook_location='Sheet: Sample data')
+                % (entity_name, depthcol, depths), workbook_location='Sheet: Sample data')
             return(0) # THIS IS CURRENTLY INFORMATIVE
         else:
             return(0)
@@ -528,14 +526,14 @@ def check_ages_and_depths_in_order(table, depthcol, agecol, depth_ref, table_nam
     elif depth_ref == 'from base':
         table = table.sort_values(by = [depthcol], ascending = False)
     else:
-        warning('The depth_ref chosen is not "from top" or "from base".', workbook_location='Sheet: Entity metadata')
+        error('The depth_ref chosen is not "from top" or "from base".', workbook_location='Sheet: Entity metadata')
         return(1)
     
     diff_idx = np.flatnonzero(np.diff(table[agecol]) <= 0)
     table = table.reset_index(drop = True)
 
     if (len(diff_idx) + 1) == table.shape[0]:
-        warning('At entity %s depth_ref is likely wrong. (all ages are inverted)' % entity_name, 
+        error('At entity %s depth_ref is likely wrong. (all ages are inverted)' % entity_name, 
             workbook_location='Sheet: %s' % table_name)
         return(1)
     elif len(diff_idx) > 0:
@@ -549,7 +547,7 @@ def check_ages_and_depths_in_order(table, depthcol, agecol, depth_ref, table_nam
                 more_depths = str(list(paired_depths[j])).replace(',', ' and')
                 depths = '%s and %s' %(depths, more_depths)
 
-        warning('Entity %s has %s inversion at the following paired %s: %s' % (entity_name, agecol, depthcol, depths), 
+        error('Entity %s has %s inversion at the following paired %s: %s' % (entity_name, agecol, depthcol, depths), 
             workbook_location='Sheet: %s' % table_name)
         return(1)
     else:
@@ -594,7 +592,7 @@ def check_values2list(table, col_name, table_name, dropdownlist, na_rm = False):
         return(0)
 
 
-def check_no_values(table, table_name, col_name, col_dtype_str_set = True):
+def check_no_values(table, table_name, col_name, col_dtype_str_set = True, severity = 'warning'):
     """Check that there are no missing values in a column.
 
     Args:
@@ -602,6 +600,8 @@ def check_no_values(table, table_name, col_name, col_dtype_str_set = True):
         table_name: string. Name of table (to be printed in warnings).
         col_name: string. Name of column to check
         col_dtype_str_set: boolean. True if np.nan has been replaced with '' (default: True)
+        severity: string, either 'warning' or 'error'. Use 'error' for columns whose
+            absence makes the record scientifically unusable. Use 'warning' for structural/optional columns.
 
     Returns:
         integer, either 0 or 1
@@ -617,7 +617,8 @@ def check_no_values(table, table_name, col_name, col_dtype_str_set = True):
         idx = table.loc[pd.isnull(table[col_name]),:].index + 3
         
     if len(idx) > 0:
-        warning('At column %s: %d value(s) is missing. See row(s): %s.' 
+        emit_fn = error if severity == 'error' else warning
+        emit_fn('At column %s: %d value(s) is missing. See row(s): %s.' 
             % (col_name, len(idx), str(list(idx)).replace('[', '').replace(']', '')),
             workbook_location = "Sheet: %s" % table_name)
         return(1)
@@ -712,7 +713,7 @@ def check_entity_names(entity_tb, table, tablename):
             entity_name_list.append(str(i))
             
     if len(entity_name_list) > 0:
-        warning('Entity %s is missing from the list. (Found in %s spreadsheet)' 
+        error('Entity %s is missing from the list. (Found in %s spreadsheet)' 
             % (str(entity_name_list).replace('[', '').replace(']', ''), tablename), 
             workbook_location='Sheet: Entity metadata')
         return(1)
@@ -720,13 +721,15 @@ def check_entity_names(entity_tb, table, tablename):
         return(0)
 
 
-def check_numbers(table, table_name, column):
+def check_numbers(table, table_name, column, severity = 'warning'):
     """Check for non-numeric numbers in a column
 
     Args:
         table: A pandas dataframe object. Table with the data.
         table_name: string. Name of table (to be printed in warnings).
         col_name: string. Name of column
+        severity: string, either 'warning' or 'error'. Use 'error' for columns
+            whose value is core scientific data. Use 'warning' for secondary numeric columns.
         
     Returns:
         integer, either 0 or 1
@@ -747,7 +750,8 @@ def check_numbers(table, table_name, column):
     if has_warning:
         store_ls_len = len(store_ls)
         store_ls = str([i+3 for i in store_ls]).replace('[', '').replace(']', '')
-        warning('At column %s: %d row(s) is not a number. See row(s): %s.' % (column, store_ls_len, store_ls), 
+        emit_fn = error if severity == 'error' else warning
+        emit_fn('At column %s: %d row(s) is not a number. See row(s): %s.' % (column, store_ls_len, store_ls), 
             workbook_location='Sheet: %s' % table_name)
         return(1)
     else:
@@ -781,13 +785,13 @@ def check_no_repeated_records(table, table_name, entity_name, column):
         for i in ls:
             col_number.append(list(table[table[column].round(6).isin([i])].index + 3))
         
-        warning('At entity %s the following %s occurred more than once: %s. See row(s): %s.' 
+        error('At entity %s the following %s occurred more than once: %s. See row(s): %s.' 
             % (entity_name, column, rep, str(col_number)[1:-1]), 
             workbook_location="Sheet: %s" % table_name)
         return(1)
 
 
-def check_positivenumbers(table, table_name, column, na_rm = False):
+def check_positivenumbers(table, table_name, column, na_rm = False, severity = 'warning'):
     """Check if numbers positive
 
     Args:
@@ -795,6 +799,8 @@ def check_positivenumbers(table, table_name, column, na_rm = False):
         table_name: string. Name of table (to be printed in warnings).
         column: string. Name of column
         na_rm: boolean. whether or not to accept NA
+        severity: string, either 'warning' or 'error'. Use 'error' for columns
+            where a negative value is a core data-integrity problem. Use 'warning' for secondary columns.
         
     Returns:
         integer, either 0 or 1
@@ -820,7 +826,8 @@ def check_positivenumbers(table, table_name, column, na_rm = False):
     if ctr > 0:
         store_ls_len = len(store_ls)
         store_ls = str([i+3 for i in store_ls]).replace('[', '').replace(']', '')
-        warning('At column %s: %d row(s) is not a positive number (or not a number). See row(s): %s.' % (column, store_ls_len, store_ls), 
+        emit_fn = error if severity == 'error' else warning
+        emit_fn('At column %s: %d row(s) is not a positive number (or not a number). See row(s): %s.' % (column, store_ls_len, store_ls), 
             workbook_location="Sheet: %s" % table_name)
         return(1)
     else:
@@ -861,7 +868,7 @@ def check_notminmax_age(table, age, uncert1, uncert2, table_name, entity_name = 
         return(0)
 
 
-def check_numbers_in_range(table, table_name, column, minval, maxval, na_rm = False):
+def check_numbers_in_range(table, table_name, column, minval, maxval, na_rm = False, severity = 'warning'):
     """Check if numbers are in range in a column (assuming they are all numeric)
 
     Args:
@@ -871,6 +878,8 @@ def check_numbers_in_range(table, table_name, column, minval, maxval, na_rm = Fa
         minval: numeric. minium value for the column
         maxval: numeric. maximum value for the column
         na_rm: boolean. whether or not to accept NA
+        severity: string, either 'warning' or 'error'. Use 'error' for columns
+            where an out-of-range value is a core data-integrity problem.
         
     Returns:
         integer, either 0 or 1
@@ -896,7 +905,8 @@ def check_numbers_in_range(table, table_name, column, minval, maxval, na_rm = Fa
     if has_warning:
         store_ls_len = len(store_ls)
         store_ls = str([i+3 for i in store_ls]).replace('[', '').replace(']', '')
-        warning('At column %s: %d row(s) is not within the valid range (>=%.2f and <=%.2f) (or not a number). See row(s): %s.' 
+        emit_fn = error if severity == 'error' else warning
+        emit_fn('At column %s: %d row(s) is not within the valid range (>=%.2f and <=%.2f) (or not a number). See row(s): %s.' 
             % (column, store_ls_len, minval, maxval, store_ls), 
             workbook_location="Sheet: %s" % table_name)
         return(1)
@@ -950,30 +960,30 @@ def check_hiatusgaps_columns(table, table_name, diagnosiscolumn, hiatusorgap, mu
                 hiatusorgap = 'hiatuses'
             elif hiatusorgap == 'G':
                 hiatusorgap = 'gaps'
-            warning_count = 0
+            error_count = 0
 
             if len(store_idx) > 0:
-                warning_count += 1
+                error_count += 1
                 store_idx = list(set(store_idx.astype('int') + 3))
                 store_idx.sort()
-                warning('For %s, %s should be filled in but is empty. See row(s): %s.' 
+                error('For %s, %s should be filled in but is empty. See row(s): %s.' 
                     % (hiatusorgap, str(colname_mustfill).replace('[', '').replace(']', ''), str(store_idx).replace('[', '').replace(']', '')),
                     workbook_location="Sheet: %s" % table_name)
             
             if len(store_idx2) > 0:
-                warning_count += 1
+                error_count += 1
                 store_idx2 = list(set(store_idx2.astype('int') + 3))
                 store_idx2.sort()
                 if len(maybe_filled_columns) > 0:
-                    warning('For %s, there are columns which must be empty but are filled in. See row(s): %s. See column(s): %s.' 
+                    error('For %s, there are columns which must be empty but are filled in. See row(s): %s. See column(s): %s.' 
                         % (hiatusorgap, str(store_idx2).replace('[', '').replace(']', ''), str(colname_empty).replace('[', '').replace(']', '')),
                         workbook_location="Sheet: %s" % table_name)
                 else:
-                    warning('For %s, only %s should be filled in. Other columns must be empty. See row(s): %s'
+                    error('For %s, only %s should be filled in. Other columns must be empty. See row(s): %s'
                         % (hiatusorgap, str(must_filled_columns).replace('[', '').replace(']', ''), str(store_idx2).replace('[', '').replace(']', '')),
                         workbook_location="Sheet: %s" % table_name)
-            if warning_count > 0:
-                return(warning_count)
+            if error_count > 0:
+                return(error_count)
             else:
                 return(0)
         else:
@@ -1162,8 +1172,9 @@ entity_count = len(pd.unique(entity_tb['entity_name']))
 # =============================================================================
 
 
-# Initiate warning counter
+# Initiate warning and error counters
 warning_ctr = 0
+error_ctr = 0
 
 # Create frequent lists
 y_n_list = ['yes', 'no']
@@ -1184,33 +1195,33 @@ if len(site_tb.index) != 1:
     fatal('Site metadata table is either empty or has more than one site. Exactly one site per workbook is allowed.',
         workbook_location='Sheet: Site metadata')
 
-loc_warning = False
+loc_error = False
 lat_and_lon = check_no_values(site_tb, 'Site metadata', 'latitude') + check_no_values(site_tb, 'Site metadata', 'longitude')
 
 if lat_and_lon == 0:
     #Latitude:
-    if check_numbers(site_tb, 'Site metadata', 'latitude') == 0:
-        if check_numbers_in_range(site_tb, 'Site metadata', 'latitude', -90, 90) == 1:
-            warning_ctr += 1
-            loc_warning = True
+    if check_numbers(site_tb, 'Site metadata', 'latitude', severity='error') == 0:
+        if check_numbers_in_range(site_tb, 'Site metadata', 'latitude', -90, 90, severity='error') == 1:
+            error_ctr += 1
+            loc_error = True
     else:
-        warning_ctr += 1
-        loc_warning = True
+        error_ctr += 1
+        loc_error = True
         
     #Longitude
-    if check_numbers(site_tb, 'Site metadata', 'longitude') == 0:
-        if check_numbers_in_range(site_tb, 'Site metadata', 'longitude', -180, 180) == 1:
-            warning_ctr += 1
-            loc_warning = True
+    if check_numbers(site_tb, 'Site metadata', 'longitude', severity='error') == 0:
+        if check_numbers_in_range(site_tb, 'Site metadata', 'longitude', -180, 180, severity='error') == 1:
+            error_ctr += 1
+            loc_error = True
     else:
-        warning_ctr += 1
-        loc_warning = True  
+        error_ctr += 1
+        loc_error = True  
 else:
     fatal('No coordinates have been provided. Please enter the coordinates of your site.', 
         workbook_location='Sheet: Site metadata')
     
-if loc_warning:
-    warning('The coordinates for this site are definitely wrong, please check.', 
+if loc_error:
+    error('The coordinates for this site are definitely wrong, please check.', 
         workbook_location='Sheet: Site metadata')
 else:
     lat = site_tb.loc[0, 'latitude']
@@ -1544,9 +1555,8 @@ contacts_dict = {i: entity_tb.loc[i, 'contact'] for i in entity_tb.index if enti
 orcid_id_dict = {i: entity_tb.loc[i, 'contact_orcid'] for i in entity_tb.index if entity_tb.loc[i, 'contact_orcid'] != ''}
 
 if len(contacts_dict) == 0:
-    warning('Contact column is empty. At least one contact is required.', 
-        workbook_location='Sheet: Entity metadata')
-    warning_ctr += 1
+    error('Contact column is empty. At least one contact is required.', workbook_location='Sheet: Entity metadata')
+    error_ctr += 1
     
 else:
     for idx, contact in contacts_dict.items():  
@@ -1652,8 +1662,8 @@ if check_no_values(entity_tb, 'Entity metadata', 'one_and_only') == 0:
                 not_one_and_only_ent = not_one_and_only_ent.iloc[indices,:]
                 
                 if not_one_and_only_ent.shape[0] > 0:
-                    warning_ctr += 1
-                    warning('If one_and_only = "no", entity_status_info cannot be "not applicable". See row(s): %s.' 
+                    error_ctr += 1
+                    error('If one_and_only = "no", entity_status_info cannot be "not applicable". See row(s): %s.' 
                         % str([i + 3 for i in not_one_and_only_ent.index]).replace('[', '').replace(']', ''), 
                         workbook_location='Sheet: Entity metadata')
                 
@@ -1666,8 +1676,8 @@ if check_no_values(entity_tb, 'Entity metadata', 'one_and_only') == 0:
                 not_one_and_only_ent = not_one_and_only_ent.iloc[indices,:]
                 
                 if not_one_and_only_ent.shape[0] > 0:
-                    warning_ctr += 1
-                    warning('If one_and_only = "no", entity_status_notes cannot be empty, "NA", "unknown", "not known" '
+                    error_ctr += 1
+                    error('If one_and_only = "no", entity_status_notes cannot be empty, "NA", "unknown", "not known" '
                         '(and their respective variants, see notes in SISAL_wb_checks GD document if required). See row(s): %s' 
                         % str([i + 3 for i in not_one_and_only_ent.index]).replace('[', '').replace(']', ''), 
                         workbook_location='Sheet: Entity metadata')
@@ -1694,8 +1704,8 @@ indices = [i for i, s in enumerate(entity_tb['data_DOI_URL'])
 
 indices = entity_tb.iloc[indices,:].index + 3
 if len(indices) > 0:
-    warning_ctr += 1
-    warning('The NOAA/PANGEA URL or DOI of the data in row(s) %s is incorrect. ' \
+    error_ctr += 1
+    error('The NOAA/PANGEA URL or DOI of the data in row(s) %s is incorrect. ' \
         'This cannot be "unknown", "N/A", "not known", etc. or have spaces before/after the text. ' \
         'It must either be the URL/DOI or just empty (as is expected in most cases)' % str(list(indices)), 
         workbook_location='Sheet: Entity metadata')
@@ -1708,8 +1718,8 @@ else:
     
     indices = entity_tb_s.iloc[indices,:].index + 3
     if len(indices) > 0:
-        warning_ctr += 1
-        warning('The NOAA/PANGEA URL or DOI of the data in row(s) %s is incorrect. ' \
+        error_ctr += 1
+        error('The NOAA/PANGEA URL or DOI of the data in row(s) %s is incorrect. ' \
             'The URL or DOI must start with either "10.", "ftp", or "http".' % str(list(indices)), 
             workbook_location='Sheet: Entity metadata')
 
@@ -1752,7 +1762,7 @@ if len(ent_ls) > 0:
 
 # Checks for all samples
 
-warning_ctr += check_no_values(sample_tb, 'Sample data', 'entity_name')
+error_ctr += check_no_values(sample_tb, 'Sample data', 'entity_name', severity='error')
 # Check that depth_sample is in mm not cm or m
 for i in set(sample_tb['entity_name']):
     if max(sample_tb.loc[sample_tb['entity_name'] == i,'depth_sample']) - min(sample_tb.loc[sample_tb['entity_name'] == i,'depth_sample']) <= 100:
@@ -1762,18 +1772,18 @@ for i in set(sample_tb['entity_name']):
 
 # Check depth_sample values
 pass_depthsample_checks = False
-if check_no_values(sample_tb, 'Sample data', 'depth_sample') == 0:
+if check_no_values(sample_tb, 'Sample data', 'depth_sample', severity='error') == 0:
     pass_depthsample_checks = True
-    if check_numbers(sample_tb, 'Sample data', 'depth_sample') == 0:
-        warning_ctr += check_positivenumbers(sample_tb, 'Sample data', 'depth_sample')
+    if check_numbers(sample_tb, 'Sample data', 'depth_sample', severity='error') == 0:
+        error_ctr += check_positivenumbers(sample_tb, 'Sample data', 'depth_sample', severity='error')
     else:
-        warning_ctr += 1
+        error_ctr += 1
 else:
-    warning_ctr += 1
+    error_ctr += 1
     
 warning_ctr += check_values2list(sample_tb, 'hiatus', 'Sample data', ['H', ''], na_rm = True)  # added '' as np.nan was replaced by ''
 warning_ctr += check_values2list(sample_tb, 'gap', 'Sample data', ['G', ''], na_rm = True)  # added '' as np.nan was replaced by ''
-warning_ctr += check_hiatusgaps_columns(sample_tb, 'Sample data', 'hiatus', 'H', ['entity_name', 'depth_sample', 'hiatus'])
+error_ctr += check_hiatusgaps_columns(sample_tb, 'Sample data', 'hiatus', 'H', ['entity_name', 'depth_sample', 'hiatus'])
 
 # Check on samples excluding hiatuses 
 
@@ -1815,9 +1825,9 @@ if (a1 == 0) & (b1 == 0): # If the sample table excluding hiatuses have mineralo
     row_no = sample_calcite.loc[sample_calcite['arag_corr'] == 'not applicable', :].index
     if len(row_no) > 0:
         row_no = str([i+3 for i in row_no]).replace('[', '').replace(']', '')
-        warning('If mineralogy = "aragonite" or "mixed", arag_corr must be something different than "not applicable". ' \
+        error('If mineralogy = "aragonite" or "mixed", arag_corr must be something different than "not applicable". ' \
             'See row(s): %s.' % row_no, workbook_location='Sheet: Sample data')
-        warning_ctr += 1
+        error_ctr += 1
 
     # Check if mineralogy = 'mixed (add note to notes sheet)' that aragonite correction was performed
     sample_calcite = sample_tb_rm_hiatus.loc[(sample_tb_rm_hiatus['mineralogy'] == 'mixed (add note to notes sheet)'), :]
@@ -1832,9 +1842,9 @@ if (a1 == 0) & (b1 == 0): # If the sample table excluding hiatuses have mineralo
     row_no = sample_calcite.loc[sample_calcite['arag_corr'] != 'unknown',:].index
     if len(row_no) > 0:
         row_no = str([i+3 for i in row_no]).replace('[', '').replace(']', '')
-        warning('If mineralogy = unknown, arag_corr cannot be anything other than "unknown". ' \
+        error('If mineralogy = unknown, arag_corr cannot be anything other than "unknown". ' \
             'See row(s): %s.' % row_no, workbook_location='Sheet: Sample data')
-        warning_ctr += 1
+        error_ctr += 1
 
 # Check that the numbers columns are filled in properly
 samplecolumnnameslist = ['d18O_measurement', 'd13C_measurement', 'Sr_Ca_measurement', 'Mg_Ca_measurement',
@@ -1903,9 +1913,9 @@ for i in set(sample_tb_rm_hiatus['entity_name']):
         sample_tb_rm_hiatus_agemodel = sample_tb_rm_hiatus_agemodel.loc[sample_tb_rm_hiatus_agemodel['entity_name'] != i, :]
         
         # Check for repeated depths when there is no age model
-        warning_ctr += check_no_repeated_records(sample_tb.loc[sample_tb['entity_name'] == i, :], 'Sample data', i, 'depth_sample')
-        warning_ctr += 1
-        warning(f'Entity {i} is likely missing an age model. This is not allowed except for some VERY special cases. ' 
+        error_ctr += check_no_repeated_records(sample_tb.loc[sample_tb['entity_name'] == i, :], 'Sample data', i, 'depth_sample')
+        error_ctr += 1
+        error(f'Entity {i} is likely missing an age model. This is not allowed except for some VERY special cases. ' 
             'No more checks will be done for this entity. Please add a dummy age-depth model to make sure that all other checks can be performed. '
             'IMPORTANT: Do not forget to delete the dummy age-depth model from the workbook once it has passed all checks.', 
             workbook_location='Sheet: Sample data')
@@ -1931,8 +1941,8 @@ for i in set(sample_tb_rm_hiatus['entity_name']):
 # Check on samples excluding hiatuses and samples from entities with no agemodel
 
 check_interp_age = False
-if check_no_values(sample_tb_rm_hiatus_agemodel, 'Sample data', 'interp_age') == 0:
-    if check_numbers(sample_tb_rm_hiatus_agemodel, 'Sample data', 'interp_age') == 0:
+if check_no_values(sample_tb_rm_hiatus_agemodel, 'Sample data', 'interp_age', severity='error') == 0:
+    if check_numbers(sample_tb_rm_hiatus_agemodel, 'Sample data', 'interp_age', severity='error') == 0:
         if check_independent_dependent_col(sample_tb_rm_hiatus_agemodel, 'Sample data', 
                                            'interp_age', 'interp_age_uncert_pos') == 0:
             if check_independent_dependent_col(sample_tb_rm_hiatus_agemodel, 'Sample data', 
@@ -1943,12 +1953,12 @@ if check_no_values(sample_tb_rm_hiatus_agemodel, 'Sample data', 'interp_age') ==
         else:
             warning_ctr += 1
     else:
-        warning_ctr += 1
+        error_ctr += 1
 else:
-    warning_ctr += 1
+    error_ctr += 1
 if check_interp_age:
-    warning_ctr += check_numbers_in_range(sample_tb_rm_hiatus_agemodel.loc[sample_tb_rm_hiatus_agemodel['hiatus'] != 'H',:], 
-                                          'Sample data', 'interp_age', -70, 800000)
+    error_ctr += check_numbers_in_range(sample_tb_rm_hiatus_agemodel.loc[sample_tb_rm_hiatus_agemodel['hiatus'] != 'H',:], 
+                                          'Sample data', 'interp_age', -70, 800000, severity='error')
 
 # Check that values are from lists
 warning_ctr += check_values2list(sample_tb_rm_hiatus_agemodel, 'age_model_type', 'Sample data',
@@ -1984,7 +1994,7 @@ for i in set(sample_tb_no_agemodel['entity_name']):
     
     a = check_no_repeated_records(sample_tb_subset, 'Sample data', i, 'depth_sample')
     b = check_no_repeated_records(sample_tb_subset, 'Sample data', i, 'interp_age')
-    warning_ctr += a + b
+    error_ctr += a + b
     sample_tb_subset_rm_hiatus = sample_tb_subset.loc[(sample_tb_subset['hiatus'] != 'H'),:]
     
     if a == 0:
@@ -2012,11 +2022,11 @@ for i in set(sample_tb_no_agemodel['entity_name']):
             
             if further_check:
                 if (np.mean(np.diff(sample_tb_subset_rm_hiatus['interp_age'])) <= 0):
-                    warning('At entity %s, depth_ref is likely wrong. The oldest speleothem sample cannot be the one at the top! ' \
+                    error('At entity %s, depth_ref is likely wrong. The oldest speleothem sample cannot be the one at the top! ' \
                         'Further checks cannot be completed until this is fixed.' % i, workbook_location='Sheet: Sample data')
-                    warning_ctr += 1
+                    error_ctr += 1
                 else:
-                    warning_ctr += check_ages_and_depths_in_order(sample_tb_subset_rm_hiatus, 'depth_sample', 
+                    error_ctr += check_ages_and_depths_in_order(sample_tb_subset_rm_hiatus, 'depth_sample', 
                                                                   'interp_age', depth_ref, 'Sample data', i)
                     warning_ctr += check_possible_hiatuses(sample_tb_subset, 'depth_sample', 'interp_age', 'hiatus', depth_ref, i)
     
@@ -2038,63 +2048,63 @@ if len(dating_tb.index) > 0:
     # Check on dating table (full) 
     # Check date_type exists and from dropdown list
     pass_datetype_warning = False
-    if check_no_values(dating_tb, 'Dating information', 'date_type', True) == 0:
+    if check_no_values(dating_tb, 'Dating information', 'date_type', True, severity='error') == 0:
         warning_ctr += check_values2list(dating_tb, 'date_type', 'Dating information', date_type_dd)
         pass_datetype_warning = True
     else:
-        warning_ctr += 1
+        error_ctr += 1
     
     # Check date_used exists and from dropdown list
     pass_dateused_warning = False
-    if check_no_values(dating_tb, 'Dating information', 'date_used', True) == 0:
+    if check_no_values(dating_tb, 'Dating information', 'date_used', True, severity='error') == 0:
         warning_ctr += check_values2list(dating_tb, 'date_used', 'Dating information', y_n_nk_list)
         pass_dateused_warning = True
     else:
-        warning_ctr += 1
+        error_ctr += 1
     
     # Check for depth_dating
     pass_depthdating_warning = False
-    if check_no_values(dating_tb, 'Dating information', 'depth_dating') == 0:
+    if check_no_values(dating_tb, 'Dating information', 'depth_dating', severity='error') == 0:
         pass_depthdating_warning = True
         # Check that depth_dating is a number and is a positive number
-        if check_numbers(dating_tb, 'Dating information', 'depth_dating') == 0:
-            warning_ctr += check_positivenumbers(dating_tb, 'Dating information', 'depth_dating')
+        if check_numbers(dating_tb, 'Dating information', 'depth_dating', severity='error') == 0:
+            error_ctr += check_positivenumbers(dating_tb, 'Dating information', 'depth_dating', severity='error')
         else:
-            warning_ctr += 1
+            error_ctr += 1
     else:
-        warning_ctr += 1
+        error_ctr += 1
     
     # Check for entity_name
     pass_entityname_warning = False
-    if check_no_values(dating_tb, 'Dating information', 'entity_name', True) == 0:
+    if check_no_values(dating_tb, 'Dating information', 'entity_name', True, severity='error') == 0:
         pass_entityname_warning = True
     else:
-        warning_ctr += 1
+        error_ctr += 1
 
     if pass_datetype_warning:
         if pass_dateused_warning:
             if pass_entityname_warning:
                 if pass_depthdating_warning:
                     # Check that the rows with 'Event; hiatus' or 'Event; gap', etc. are filled in properly
-                    warning_ctr += check_hiatusgaps_columns(dating_tb, 'Dating information', 'date_type', 'Event; hiatus', 
+                    error_ctr += check_hiatusgaps_columns(dating_tb, 'Dating information', 'date_type', 'Event; hiatus', 
                         ['entity_name', 'depth_dating', 'date_used', 'date_type'])
                     
-                    warning_ctr += check_hiatusgaps_columns(dating_tb, 'Dating information', 'date_type', 'Event; actively forming', 
+                    error_ctr += check_hiatusgaps_columns(dating_tb, 'Dating information', 'date_type', 'Event; actively forming', 
                         ['entity_name', 'depth_dating', 'date_used', 'date_type', 
                          'corr_age', 'corr_age_uncert_pos', 'corr_age_uncert_neg'], 
                         ['chem_year'])
                     
-                    warning_ctr += check_hiatusgaps_columns(dating_tb, 'Dating information', 'date_type', 'Event; start of laminations', 
+                    error_ctr += check_hiatusgaps_columns(dating_tb, 'Dating information', 'date_type', 'Event; start of laminations', 
                         ['entity_name', 'depth_dating', 'date_used', 'date_type', 
                          'corr_age', 'corr_age_uncert_pos', 'corr_age_uncert_neg'], 
                         ['chem_year'])
                     
-                    warning_ctr += check_hiatusgaps_columns(dating_tb, 'Dating information', 'date_type', 'Event; end of laminations', 
+                    error_ctr += check_hiatusgaps_columns(dating_tb, 'Dating information', 'date_type', 'Event; end of laminations', 
                         ['entity_name', 'depth_dating', 'date_used', 'date_type', 
                          'corr_age', 'corr_age_uncert_pos', 'corr_age_uncert_neg'], 
                         ['chem_year'])
                     
-                    warning_ctr += check_hiatusgaps_columns(dating_tb, 'Dating information', 'date_type', 'other (add note to notes sheet)', 
+                    error_ctr += check_hiatusgaps_columns(dating_tb, 'Dating information', 'date_type', 'other (add note to notes sheet)', 
                         ['entity_name', 'depth_dating', 'date_used', 'date_type', 'corr_age'], 
                         ['dating_thickness', 'material_dated', 'min_weight', 'max_weight', 
                          'corr_age_uncert_neg', 'corr_age_uncert_pos', 'lab_num'])
@@ -2104,8 +2114,8 @@ if len(dating_tb.index) > 0:
         if check_independent_dependent_col(dating_tb, 'Dating information', 'max_weight', 'min_weight') == 0:
             dating_idx_weight = dating_tb.loc[dating_tb.min_weight > dating_tb.max_weight,:].index
             if len(dating_idx_weight) > 0:
-                warning_ctr += 1
-                warning('"min_weight" is greater than "max_weight" at row %s.' % str(list(dating_idx_weight)), 
+                error_ctr += 1
+                error('"min_weight" is greater than "max_weight" at row %s.' % str(list(dating_idx_weight)), 
                     workbook_location='Sheet: Dating information')
         else:
             warning_ctr += 1
@@ -2113,8 +2123,8 @@ if len(dating_tb.index) > 0:
         warning_ctr += 1
 
     # Check that uncorr_age are numeric (np.nan is considered a number)
-    warning_ctr += check_numbers(dating_tb, 'Dating information', 'uncorr_age')
-    warning_ctr += check_numbers(dating_tb, 'Dating information', 'corr_age')
+    error_ctr += check_numbers(dating_tb, 'Dating information', 'uncorr_age', severity='error')
+    error_ctr += check_numbers(dating_tb, 'Dating information', 'corr_age', severity='error')
     
     # Check for positive numbers (explicit list, not the set used for version checking)
     datingcolumnnameslist2 = ['dating_thickness', 'min_weight', 'max_weight', '14C_correction',
@@ -2160,11 +2170,11 @@ if len(dating_tb.index) > 0:
     
     # Check that corr_age is in range
     # if modern_reference is CE/BCE, the ages must be converted to BP(1950) before performing checks
-    warning_ctr += check_numbers_in_range(
+    error_ctr += check_numbers_in_range(
         dating_tb.loc[(dating_tb['date_type'] != 'Event; hiatus') 
         & ((dating_tb['date_used'] == 'yes') 
         | (dating_tb['date_used'] == 'unknown')),:], 
-        'Dating information', 'corr_age', -70, 800000)
+        'Dating information', 'corr_age', -70, 800000, na_rm = False, severity = 'error')
 
     # Check on dating table (excluding date_type LIKE 'Event; %')
 
@@ -2196,9 +2206,9 @@ if len(dating_tb.index) > 0:
             number_of_rows = len(sub_tb.index)
             if number_of_rows > 0:
                 Row_numbers = str(list(sub_tb.index + 3)).replace('[','').replace(']', '')
-                warning('Column %s is not filled in when date_used = "yes" or "unknown". %d row(s). See row(s): %s.' % (k, number_of_rows, Row_numbers), 
+                error('Column %s is not filled in when date_used = "yes" or "unknown". %d row(s). See row(s): %s.' % (k, number_of_rows, Row_numbers), 
                     workbook_location='Sheet: Dating information')
-                warning_ctr += 1
+                error_ctr += 1
     
     for i in set(dating_tb['entity_name']):
         dating_tb_hiatus = dating_tb_useinagemodel.loc[(dating_tb_useinagemodel['entity_name'] == i),:]
@@ -2247,8 +2257,8 @@ if len(dating_tb.index) > 0:
         tb_empty = dating_uth.loc[pd.isnull(dating_uth['decay_constant']),:]
         if len(tb_empty.index) > 0:
             row_no = str([i+3 for i in tb_empty.index]).replace('[', '').replace(']', '')
-            warning_ctr += 1
-            warning('Column decay_constant must be filled in when date_type is of U/Th type. See row(s): %s.' % row_no, 
+            error_ctr += 1
+            error('Column decay_constant must be filled in when date_type is of U/Th type. See row(s): %s.' % row_no, 
                 workbook_location='Sheet: Dating information')
         else:
             warning_ctr += check_values2list(dating_uth, 'decay_constant', 'Dating information', 
@@ -2310,13 +2320,12 @@ if len(dating_tb.index) > 0:
                         workbook_location='Sheet: Dating information')
                     warning_ctr += 1
     
-    # check if there has been new warnings counted. This will be use to indicate 
+    # Check if there has been new warnings counted. This will be use to indicate 
     # whether or not to check for hiatuses in sample tables and in the dating table
     warning_ctr_hiat = warning_ctr - warning_ctr_bef 
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # 7.iii.c.6. Check that if there is an Event; actively forming
-    #   that depth_dating = 0, if depth_ref = 'from top'
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    # Check that if there is an Event; actively forming
+    # that depth_dating = 0, if depth_ref = 'from top'
     for i in pd.unique(dating_tb['entity_name']):
         # depth_ref not available in v15 — skip depth_dating = 0 check
         ent_activ = dating_tb.loc[(dating_tb['entity_name'] == i) & (dating_tb['date_type'] == 'Event; actively forming'), :]
@@ -2337,10 +2346,10 @@ if len(dating_tb.index) > 0:
 # =============================================================================
 
 if dating_lamina_tb.shape[0] > 0:
-    warning_ctr += check_no_values(dating_lamina_tb, 'Lamina age vs depth', 'entity_name')
-    warning_ctr += check_no_values(dating_lamina_tb, 'Lamina age vs depth', 'depth_lam')
-    check_lamage_warning = check_no_values(dating_lamina_tb, 'Lamina age vs depth', 'lam_age')
-    warning_ctr += check_lamage_warning
+    error_ctr += check_no_values(dating_lamina_tb, 'Lamina age vs depth', 'entity_name', severity='error')
+    error_ctr += check_no_values(dating_lamina_tb, 'Lamina age vs depth', 'depth_lam', severity='error')
+    check_lamage_warning = check_no_values(dating_lamina_tb, 'Lamina age vs depth', 'lam_age', severity='error')
+    error_ctr += check_lamage_warning
     
     # modern_reference was removed from v15 Lamina age vs depth table
     # Check that the uncertainties coexist and that lam_age exist if they exist
@@ -2358,7 +2367,7 @@ if dating_lamina_tb.shape[0] > 0:
     
     # Make sure lam_age is in valid range (no modern_reference in v15 to convert CE/BCE)
     if check_lamage_warning == 0:
-        warning_ctr += check_numbers_in_range(dating_lamina_tb, 'Lamina age vs depth', 'lam_age', -70, 800000)
+        error_ctr += check_numbers_in_range(dating_lamina_tb, 'Lamina age vs depth', 'lam_age', -70, 800000, severity='error')
 
 # =============================================================================
 # Section 7.vi Reference spreadsheet
@@ -2385,8 +2394,8 @@ if len(mylist) > 0:
                     workbook_location='Sheet: References')
         elif len(set(ref_tb.loc[ref_tb['citation'] == i, 'publication_DOI'])) == 0:
             ctr += 1
-            warning('Unexpected internal state: citation "%s" has zero associated publication_DOI values despite appearing more than once. ' \
-                'This should not be possible, please report this to the developers.' % i, workbook_location='Sheet: References')
+            warning('Unexpected internal state: citation "%s" has zero associated publication_DOI values despite appearing more than once. ' 
+                % i, workbook_location='Sheet: References')
         else:
             pass
     if ctr > 0:
@@ -2407,8 +2416,8 @@ if len(mylist) > 0:
                 'please move the workbook to the "Checked" folder manually.' % i, workbook_location='Sheet: References')
         elif len(set(ref_tb.loc[ref_tb['publication_DOI'] == i, 'citation'])) == 0:
             ctr += 1
-            warning('Unexpected internal state: DOI "%s" has zero associated citation values despite appearing more than once. ' \
-                'This should not be possible, please report this to the developers.' % i, workbook_location='Sheet: References')
+            warning('Unexpected internal state: DOI "%s" has zero associated citation values despite appearing more than once. '
+                % i, workbook_location='Sheet: References')
         else:
             pass
     if ctr > 0:
@@ -2470,9 +2479,9 @@ if dating_lamina_tb.shape[0] > 0:
         if dating_tb_subset_startoflam.shape[0] > 0:
             pass
         else:
-            warning('There is at least one date in this tab but the dating information table does not contain an "Event; start of laminations".', 
+            error('There is at least one date in this tab but the dating information table does not contain an "Event; start of laminations".', 
                 workbook_location='Sheet: Lamina age vs depth')
-            warning_ctr += 1
+            error_ctr += 1
 
 # Check that if dating information table contain an 'Event; start of laminations' and whether lamina age vs depth table exists
 dating_tb_startoflam = dating_tb.loc[(dating_tb['date_type'] == 'Event; start of laminations'),:]
@@ -2486,9 +2495,9 @@ if dating_tb_startoflam.shape[0] > 0:
         if dating_lamina_tb_subset.shape[0] > 0:
             pass
         else:
-            warning('There is an "Event; start of laminations" but no data in the lamina age vs depth spreadsheet.', 
+            error('There is an "Event; start of laminations" but no data in the lamina age vs depth spreadsheet.', 
                 workbook_location='Sheet: Dating information')
-            warning_ctr += 1
+            error_ctr += 1
 
 # Check if hiatuses depth in sample spreadsheet matches the depths in dating information
 if 'H' in list(sample_tb['hiatus']):
@@ -2500,9 +2509,9 @@ if 'H' in list(sample_tb['hiatus']):
         if len(set(hiatus_dating_subset['depth_dating']).intersection(hiatus_sample_subset_entity['depth_sample'])) == len(hiatus_sample_subset_entity['depth_sample']):
             pass
         else:
-            warning_ctr += 1
+            error_ctr += 1
             hiatus_ls = str(list(set(hiatus_sample_subset_entity['depth_sample']) - set(hiatus_dating_subset['depth_dating'])))
-            warning('Entity %s has a hiatus in this tab that does not match that of the dating spreadsheet. See depth_sample %s.' % (q, hiatus_ls), 
+            error('Entity %s has a hiatus in this tab that does not match that of the dating spreadsheet. See depth_sample %s.' % (q, hiatus_ls), 
                 workbook_location='Sheet: Sample data')
 else:
     pass # No hiatus in this workbook
@@ -2528,9 +2537,9 @@ if (len(dating_tb.index) > 0) & (len(sample_tb.index) > 0):
                 if len(hiatus_sample_subset.intersection(set(hiatus_dating_subset_entity['depth_dating']))) == len(hiatus_dating_subset_entity['depth_dating']):
                     pass
                 else:
-                    warning_ctr += 1
+                    error_ctr += 1
                     hiatus_ls = str(list(set(hiatus_dating_subset_entity['depth_dating']) - hiatus_sample_subset))
-                    warning('Entity %s has a hiatus in this tab that does not match that of the sample data spreadsheet. See depth_dating %s.' % (q, hiatus_ls), 
+                    error('Entity %s has a hiatus in this tab that does not match that of the sample data spreadsheet. See depth_dating %s.' % (q, hiatus_ls), 
                         workbook_location='Sheet: Dating information')
         else:
             pass # No hiatus in this workbook
@@ -2539,8 +2548,8 @@ if (len(dating_tb.index) > 0) & (len(sample_tb.index) > 0):
 for g in np.unique(entity_tb['entity_name']):
     ref_tb_integrity = ref_tb.loc[ref_tb['entity_name'] == g, :]
     if ref_tb_integrity.shape[0] < 1:
-        warning_ctr += 1
-        warning('Entity %s is missing a reference.' % g, workbook_location='Sheet: References')
+        error_ctr += 1
+        error('Entity %s is missing a reference.' % g, workbook_location='Sheet: References')
     
 # Check that there is at least the dating table exist or both dating table and lamina age vs depth table exist  
 for e in np.unique(entity_tb.loc[entity_tb['speleothem_type'] != 'composite','entity_name']):
@@ -2550,43 +2559,43 @@ for e in np.unique(entity_tb.loc[entity_tb['speleothem_type'] != 'composite','en
         pass
     else:
         if datinglamina_tb_subset.shape[0] > 0:
-            warning('Entity %s has laminae information but no dating information. ' \
+            error('Entity %s has laminae information but no dating information. ' \
                 'date_type = "Event; start of laminations" and "Event; end of laminations" must be entered!' 
                 % e, workbook_location='Sheet: Dating information')
-            warning_ctr += 1
+            error_ctr += 1
         else:
-            warning('Entity %s has no dating information.' % e, workbook_location='Sheet: Dating information')
-            warning_ctr += 1
+            error('Entity %s has no dating information.' % e, workbook_location='Sheet: Dating information')
+            error_ctr += 1
 
     # If there is Event; end of laminations, there must be Event; start of laminations
     if 'Event; end of laminations' in list(dating_tb_subset['date_type']):
         if 'Event; start of laminations' in list(dating_tb_subset['date_type']):
             pass
         else:
-            warning_ctr += 1
-            warning('There is date_type = "Event; end of laminations" but no date_type = "Event; start of laminations" for Entity %s. ' \
+            error_ctr += 1
+            error('There is date_type = "Event; end of laminations" but no date_type = "Event; start of laminations" for Entity %s. ' \
                 'Both must be entered!' % e, workbook_location='Sheet: Dating information')
     else:
         if 'Event; start of laminations' in list(dating_tb_subset['date_type']):
-            warning_ctr += 1
-            warning('There is date_type = "Event; start of laminations" but no date_type = "Event; end of laminations" for entity %s. ' \
+            error_ctr += 1
+            error('There is date_type = "Event; start of laminations" but no date_type = "Event; end of laminations" for entity %s. ' \
                 'Both must be entered!' % e, workbook_location='Sheet: Dating information')
     
     # If there is Event; end of laminations or Event; start of laminations, there shoudl be lamina age vs depth table
     if (any(x in list(dating_tb_subset['date_type']) for x in ['Event; end of laminations', 'Event; start of laminations'])) & (datinglamina_tb_subset.shape[0] == 0):
-        warning_ctr += 1
-        warning('Lamina age vs depth tab: According to the Dating information tab, entity %s is laminated ' 
-                    '(i.e. date_type = "Event; end of laminations" or "Event; start of laminations" have been entered). ' 
-                    'However, there is no information on the laminae in the lamina age vs depth table. ' 
-                    'Have you done your best to find these data?' % e, workbook_location='Sheet: Dating information')
+        error_ctr += 1
+        error('Lamina age vs depth tab: According to the Dating information tab, entity %s is laminated ' 
+            '(i.e. date_type = "Event; end of laminations" or "Event; start of laminations" have been entered). ' 
+            'However, there is no information on the laminae in the lamina age vs depth table. ' 
+            'Have you done your best to find these data?' % e, workbook_location='Sheet: Dating information')
     
     # If there is lamina age vs depth table, there must be 'Event; start of laminations
     if datinglamina_tb_subset.shape[0] > 0:
         if ('Event; start of laminations' in list(dating_tb_subset['date_type'])):
             pass
         else:
-            warning_ctr += 1
-            warning('Entity %s has laminae data but is missing date_type = "Event; start of laminations" in the dating information spreadsheet.' % e, 
+            error_ctr += 1
+            error('Entity %s has laminae data but is missing date_type = "Event; start of laminations" in the dating information spreadsheet.' % e, 
                 workbook_location='Sheet: Dating information')
     
     # If there is no Event; start of laminations, ann_lam_check for that particular entity must be not applicable
@@ -2594,8 +2603,8 @@ for e in np.unique(entity_tb.loc[entity_tb['speleothem_type'] != 'composite','en
     if (any(x in list(dating_tb_subset['date_type']) for x in ['Event; start of laminations', 'Event; end of laminations'])):
         if sample_tb_rm_hiatus_ent.shape[0] > 0:
             if (any(sample_tb_rm_hiatus_ent['ann_lam_check'] == 'not applicable')):
-                warning_ctr += 1
-                warning('Entity %s is laminated and therefore ann_lam_check cannot not be "not applicable".' % e, workbook_location='Sheet: Sample data')
+                error_ctr += 1
+                error('Entity %s is laminated and therefore ann_lam_check cannot not be "not applicable".' % e, workbook_location='Sheet: Sample data')
             else:
                 pass
         else:
@@ -2631,8 +2640,8 @@ for e in np.unique(dating_tb_lam.loc[:,'entity_name']):
     if further_check:
         if dating_ent['date_type'].iloc[0] != 'Event; end of laminations':
             further_check = False
-            warning_ctr += 1
-            warning('The youngest date related to laminae for entity %s is not linked to an "Event; end of laminations". ' \
+            error_ctr += 1
+            error('The youngest date related to laminae for entity %s is not linked to an "Event; end of laminations". ' \
                 'This may be missing. Note that "start of laminations" refers to the depth at which laminae started forming '
                 '(i.e. bottom/oldest part of the section) and NOT to the counting order.' % e, workbook_location='Sheet: Dating information')
         else:
@@ -2648,8 +2657,8 @@ for e in np.unique(dating_tb_lam.loc[:,'entity_name']):
 
         if list(dating_ent['date_type'])[-1] != 'Event; start of laminations':
             further_check = False
-            warning_ctr += 1
-            warning('The oldest date related to laminae for entity %s is not linked to an "Event; start of laminations". This may be missing. ' \
+            error_ctr += 1
+            error('The oldest date related to laminae for entity %s is not linked to an "Event; start of laminations". This may be missing. ' \
                 'Note that "start of laminations" refers to the depth at which laminae started forming (i.e. bottom/oldest part of the section) and NOT to the counting order.' % e, 
                 workbook_location='Sheet: Dating information')
         
@@ -2665,23 +2674,23 @@ for e in np.unique(dating_tb_lam.loc[:,'entity_name']):
                         else:
                             date_type = dating_ent['date_type'].iloc[i]
                 if consec_warning:
-                    warning_ctr += 1
-                    warning('There are two consecutive "Event; end of laminations" or "Event; start of laminations" when the dating information of entity %s is sorted by depth. ' \
+                    error_ctr += 1
+                    error('There are two consecutive "Event; end of laminations" or "Event; start of laminations" when the dating information of entity %s is sorted by depth. ' \
                         'The two events should alternate between each other.' % e, workbook_location='Sheet: Dating information')
 
       
 # Check that entity name in dating information and sample data matches the ones on the entity metadata spreadsheet
 # sample table
-warning_ctr += check_entity_names(entity_tb, sample_tb, 'Sample data')
+error_ctr += check_entity_names(entity_tb, sample_tb, 'Sample data')
 
 # dating information table
-warning_ctr += check_entity_names(entity_tb, dating_tb, 'Dating information')
+error_ctr += check_entity_names(entity_tb, dating_tb, 'Dating information')
 
 # Lamina age vs depth
-warning_ctr += check_entity_names(entity_tb, dating_lamina_tb, 'Lamina age vs depth')
+error_ctr += check_entity_names(entity_tb, dating_lamina_tb, 'Lamina age vs depth')
 
 # References
-warning_ctr += check_entity_names(entity_tb, ref_tb, 'References')
+error_ctr += check_entity_names(entity_tb, ref_tb, 'References')
 
 # Cross-check all entities
 # Check that the last 10 characters in data_DOI_URL and publication_DOI are not
@@ -2748,7 +2757,7 @@ if len(sample_tb.index) > 0:
 # =============================================================================
 
 
-if warning_ctr < 1:
+if error_ctr < 1:
     shutil.copy(input_file, output_file)
     pass
 
