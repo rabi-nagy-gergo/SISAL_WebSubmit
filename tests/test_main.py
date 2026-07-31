@@ -45,15 +45,23 @@ async def test_garbage_collector_deletes_expired_sessions(mock_sleep, tmp_path):
     # 1. Create an EXPIRED session (timestamp in the past)
     expired_id = "expired-session"
     os.makedirs(sessions_dir / expired_id)
-    with open(sessions_dir / expired_id / "metadata.json", "w") as f:
-        json.dump({"expires_at": 10000.0}, f)  # Old timestamp
+
+    def _write_expired_metadata():
+        with open(sessions_dir / expired_id / "metadata.json", "w") as f:
+            json.dump({"expires_at": 10000.0}, f)  # Old timestamp
+
+    await asyncio.to_thread(_write_expired_metadata)
 
     # 2. Create a VALID session (timestamp far in the future)
     valid_id = "valid-session"
     os.makedirs(sessions_dir / valid_id)
     future_time = asyncio.get_event_loop().time() + 9999999999.0
-    with open(sessions_dir / valid_id / "metadata.json", "w") as f:
-        json.dump({"expires_at": future_time}, f)
+
+    def _write_valid_metadata():
+        with open(sessions_dir / valid_id / "metadata.json", "w") as f:
+            json.dump({"expires_at": future_time}, f)
+
+    await asyncio.to_thread(_write_valid_metadata)
 
     # Setup: We must break the infinite "while True" loop in the GC.
     # We force asyncio.sleep to raise a CancelledError.
@@ -107,10 +115,14 @@ async def test_garbage_collector_handles_corrupted_metadata_exception(
     # Create a session folder with a corrupted metadata.json (Invalid JSON)
     corrupted_id = "invalid-json-session"
     os.makedirs(sessions_dir / corrupted_id)
-    with open(
-        sessions_dir / corrupted_id / "metadata.json", "w", encoding="utf-8"
-    ) as f:
-        f.write("{this is not valid json, it will raise JSONDecodeError}")
+
+    def _write_corrupted_metadata():
+        with open(
+            sessions_dir / corrupted_id / "metadata.json", "w", encoding="utf-8"
+        ) as f:
+            f.write("{this is not valid json, it will raise JSONDecodeError}")
+
+    await asyncio.to_thread(_write_corrupted_metadata)
 
     mock_sleep.side_effect = asyncio.CancelledError
 

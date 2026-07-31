@@ -174,12 +174,14 @@ def test_run_plots_script_failure(mock_exec, client, tmp_path, mock_session):
 @patch("src.pages.plots.asyncio.create_subprocess_exec")
 def test_run_plots_subprocess_exception(mock_exec, client, tmp_path, mock_session):
     """Tests that unhandled Python exceptions during subprocess call return 500."""
-    # Setup: Force an exception
-    mock_exec.side_effect = Exception("Rscript command not found")
+    # Setup: Force an exception using a specific error type
+    mock_exec.side_effect = ValueError("Rscript command not found")
 
-    with patch("src.services.api_utils.SESSIONS_DIR", str(tmp_path)):
-        with pytest.raises(Exception):
-            client.post(f"/api/run_plots/{mock_session}")
+    with (
+        patch("src.services.api_utils.SESSIONS_DIR", str(tmp_path)),
+        pytest.raises(ValueError, match="Rscript command not found"),
+    ):
+        client.post(f"/api/run_plots/{mock_session}")
 
 
 # ==========================================

@@ -152,15 +152,22 @@ function renderReport(data) {
         is_passed: false 
     };
 
+    const totalInformative = report.informative ? report.informative.length : 0;
+    const totalWarnings = report.total_warnings || 0;
+    const totalErrors = report.total_errors || 0;
+    const totalFatals = report.total_fatal || 0;
+
+    // Update accordion button counts
+    document.getElementById('count-info').textContent = totalInformative;
+    document.getElementById('count-warning').textContent = totalWarnings;
+    document.getElementById('count-error').textContent = totalErrors;
+    document.getElementById('count-fatal').textContent = totalFatals;
+
     // Render the 4 separate tables
     renderMessageRows(document.getElementById('table-informative').querySelector('tbody'), report.informative, 'Informative', 'No informative messages.');
     renderMessageRows(document.getElementById('table-warnings').querySelector('tbody'), report.warnings, 'Warning', 'No warnings to display.');
     renderMessageRows(document.getElementById('table-errors').querySelector('tbody'), report.errors, 'Error', 'No errors to display.');
     renderMessageRows(document.getElementById('table-fatals').querySelector('tbody'), report.fatals, 'Fatal', 'No fatal errors to display.');
-
-    const totalErrors = report.total_errors || 0;
-    const totalFatals = report.total_fatal || 0;
-    const totalWarnings = report.total_warnings || 0;
 
     let iconSvg = '';
     let title = '';
@@ -170,7 +177,7 @@ function renderReport(data) {
     if (totalErrors > 0 || totalFatals > 0) {
         alertClass = 'alert-danger';
         title = 'Validation failed!';
-        desc = `Found ${totalErrors} error(s) and ${totalFatals} fatal issue(s). Please review the tables below and correct your workbook.`;
+        desc = `Found ${totalWarnings} warning(s), ${totalErrors} error(s) and ${totalFatals} fatal issue(s). Please review the tables below and correct your workbook.`;
         iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-x-octagon-fill" viewBox="0 0 16 16"><path d="M11.46.146A.5.5 0 0 0 11.107 0H4.893a.5.5 0 0 0-.353.146L.146 4.54A.5.5 0 0 0 0 4.893v6.214a.5.5 0 0 0 .146.353l4.394 4.394a.5.5 0 0 0 .353.146h6.214a.5.5 0 0 0 .353-.146l4.394-4.394a.5.5 0 0 0 .146-.353V4.893a.5.5 0 0 0-.146-.353zM8 4c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995A.905.905 0 0 1 8 4m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/></svg>`;
     } 
     else if (totalWarnings > 0) {

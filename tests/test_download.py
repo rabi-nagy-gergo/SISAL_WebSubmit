@@ -25,14 +25,21 @@ def mock_session(tmp_path):
     os.makedirs(input_dir)
     os.makedirs(output_dir)
 
-    # Create input files (One Excel, one text file that should be ignored)
+    # Create input files
     (input_dir / "data.xlsx").write_text("dummy excel data")
     (input_dir / "ignore_me.txt").write_text("this should not be in zip")
 
-    # Create output files (PDF, map PNG, standard PNG that should be ignored)
-    (output_dir / "plot_1.pdf").write_bytes(b"dummy pdf data")
-    (output_dir / "map_site.png").write_bytes(b"dummy map png data")
-    (output_dir / "plot_1.png").write_bytes(b"dummy standard png data")
+    # Create output files
+    # 1. Valid files that match the strict prefix/extension rules
+    (output_dir / "QC_passed_SISAL_workbook_test.xlsx").write_bytes(
+        b"dummy valid excel"
+    )
+    (output_dir / "QC_agemodel_hiatus_test.pdf").write_bytes(b"dummy valid pdf")
+    (output_dir / "map_site.png").write_bytes(b"dummy valid map png")
+
+    # 2. Invalid files that should be ignored despite being in the output directory
+    (output_dir / "plot_1.pdf").write_bytes(b"dummy wrong prefix pdf")
+    (output_dir / "plot_1.png").write_bytes(b"dummy wrong prefix png")
 
     # Create a dummy QC log with valid JSON, invalid JSON, and Status messages
     log_content = (
@@ -94,14 +101,16 @@ def test_download_results_zip_contents(client, tmp_path, mock_session):
             file_names = zipf.namelist()
 
             # These should be included based on our filtering logic
-            assert "data.xlsx" in file_names
-            assert "plot_1.pdf" in file_names
+            assert "QC_passed_SISAL_workbook_test.xlsx" in file_names
+            assert "QC_agemodel_hiatus_test.pdf" in file_names
             assert "map_site.png" in file_names
             assert "QC_log_data.txt" in file_names
 
             # These should be explicitly excluded
-            assert "ignore_me.txt" not in file_names
-            assert "plot_1.png" not in file_names
+            assert "data.xlsx" not in file_names  # In input folder
+            assert "ignore_me.txt" not in file_names  # In input folder
+            assert "plot_1.pdf" not in file_names  # Wrong prefix
+            assert "plot_1.png" not in file_names  # Wrong prefix
 
 
 def test_download_results_report_formatting(client, tmp_path, mock_session):

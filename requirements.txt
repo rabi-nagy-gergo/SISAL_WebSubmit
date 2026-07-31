@@ -11,6 +11,7 @@ xlrd
 matplotlib<3.11.0
 cartopy
 shapely
+scipy
 
 # Python tester dependencies
 pytest

@@ -1,8 +1,9 @@
+import asyncio
 import json
 import os
 import shutil
 import zipfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
@@ -57,7 +58,6 @@ async def download_results(session_id: str):
         raise HTTPException(status_code=404, detail="Session not found or expired.")
 
     output_dir = paths["output"]
-    input_dir = paths["input"]
 
     if not os.path.exists(output_dir) or not os.listdir(output_dir):
         raise HTTPException(
@@ -67,18 +67,14 @@ async def download_results(session_id: str):
     zip_path = os.path.join(paths["base"], f"SISAL_QC_Results_{session_id}.zip")
 
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-        # 1. Add input files
-        if os.path.exists(input_dir):
-            for f in os.listdir(input_dir):
-                if f.endswith(".xlsx"):
-                    zipf.write(os.path.join(input_dir, f), arcname=f)
-
-        # 2. Add output files (PDFs and Maps)
+        # Add output files (QC passed excel, log file, PDF and map)
         if os.path.exists(output_dir):
             for f in os.listdir(output_dir):
-                if f.endswith(".pdf"):
-                    zipf.write(os.path.join(output_dir, f), arcname=f)
-                elif f.startswith("map_") and f.endswith(".png"):
+                if (
+                    (f.startswith("QC_passed_SISAL_workbook") and f.endswith(".xlsx"))
+                    or (f.startswith("QC_agemodel_hiatus") and f.endswith(".pdf"))
+                    or (f.startswith("map_") and f.endswith(".png"))
+                ):
                     zipf.write(os.path.join(output_dir, f), arcname=f)
 
             # 3. Add generated human-readable report
@@ -115,11 +111,15 @@ async def save_session(session_id: str):
 
     # Set session expiry.
     expires_at = (
-        datetime.now() + timedelta(hours=SAVED_SESSION_TIMEOUT_HOURS)
+        datetime.now(timezone.utc) + timedelta(hours=SAVED_SESSION_TIMEOUT_HOURS)
     ).timestamp()
     metadata = {"saved": True, "expires_at": expires_at}
-    with open(paths["metadata"], "w", encoding="utf-8") as f:
-        json.dump(metadata, f)
+
+    def _write_metadata():
+        with open(paths["metadata"], "w", encoding="utf-8") as f:
+            json.dump(metadata, f)
+
+    await asyncio.to_thread(_write_metadata)
 
     return {"status": "success", "message": "Session saved."}
 
