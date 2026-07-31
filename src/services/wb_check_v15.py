@@ -158,6 +158,7 @@ from numbers import Number
 import matplotlib
 import numpy as np
 import pandas as pd
+from scipy.optimize import brentq
 
 matplotlib.use('Agg')  # non-interactive backend for saving figures
 import warnings
@@ -2736,7 +2737,285 @@ for i in entity_tb['entity_name']:
 
 
 # =============================================================================
-# Section 8. Print out the number of unknowns
+# Section 8. U-Th age credibility check
+# Recalculates U-Th ages independently from submitted isotope ratios /
+# concentrations and compares to reported uncorr_age / corr_age.
+# Ported from sisal2_read.jl (Fohlmeister, QC_SISALv2_dating_metadata).
+# June 2026 (L. Endres)
+# Python/JSON integration (G)
+# =============================================================================
+
+status_msg(85, "Data Validation", "Performing U-Th age credibility check...")
+
+# 8.i. Decay constants
+
+_U234_Thalf_new  = 245620.0    # Cheng et al. 2013, EPSL
+_Th230_Thalf_new =  75584.0    # Cheng et al. 2013, EPSL
+_U234_Thalf_old  = 245250.0    # Cheng et al. 2000, Chem Geol
+_Th230_Thalf_old =  75690.0    # Cheng et al. 2000, Chem Geol
+
+_L234_new  = np.log(2) / _U234_Thalf_new
+_L230_new  = np.log(2) / _Th230_Thalf_new
+_L234_old  = np.log(2) / _U234_Thalf_old
+_L230_old  = np.log(2) / _Th230_Thalf_old
+_L234_very = 2.835e-6          # Edwards et al. 1987, EPSL
+_L230_very = 9.195e-6          # Edwards et al. 1987, EPSL
+_L232      = 4.9475e-11        # 232Th; CRC Handbook
+_L238      = 1.55125e-10       # 238U;  Jaffey et al. 1971
+
+def _uth_decay_constants(decay_str):
+    if 'Cheng et al. 2013' in str(decay_str):
+        return _L230_new, _L234_new
+    elif 'Cheng et al. 2000' in str(decay_str):
+        return _L230_old, _L234_old
+    else:
+        return _L230_very, _L234_very
+
+# 8.ii. Helper functions
+
+def _uth_val(row, col):
+    """Return float from row[col], or None if missing/NaN/non-numeric."""
+    try:
+        v = row[col]
+        if v is None or (isinstance(v, float) and np.isnan(v)):
+            return None
+        return float(v)
+    except (KeyError, TypeError, ValueError):
+        return None
+
+def _uth_prepare1(var, var_err, rel_err=0.01):
+    """(var, error): substitute rel_err * |var| when absolute error is absent."""
+    if var is None:
+        return None, None
+    err = var_err if (var_err is not None and not np.isnan(var_err)) else abs(var) * rel_err
+    return float(var), float(err)
+
+def _uth_prepare2(v1, v1e, re1, v2, v2e, re2):
+    """Ratio v1/v2 with propagated error."""
+    if v1 is None or v2 is None or v2 == 0.0:
+        return None, None
+    e1 = v1e if (v1e is not None and not np.isnan(v1e)) else abs(v1) * re1
+    e2 = v2e if (v2e is not None and not np.isnan(v2e)) else abs(v2) * re2
+    return v1 / v2, np.sqrt((e1 / v2) ** 2 + (v1 * e2 / v2 ** 2) ** 2)
+
+def _uth_age_eq(t, UU, ThU, l230, l234):
+    return ((1 - np.exp(-t * l230))
+            + (UU - 1) * l230 / (l230 - l234) * (1 - np.exp(-t * (l230 - l234)))
+            - ThU)
+
+def _uth_solve(UU, ThU, l230, l234):
+    """Age by root-finding on ingrowth equation. Returns None if out of range."""
+    try:
+        if _uth_age_eq(0.0, UU, ThU, l230, l234) * _uth_age_eq(1e6, UU, ThU, l230, l234) >= 0:
+            return None
+        return brentq(_uth_age_eq, 0.0, 1e6, args=(UU, ThU, l230, l234), xtol=0.01)
+    except Exception:
+        return None
+
+def _uth_age_mc(UU, dUU, ThU, dThU, l230, l234, n_mc=5000):
+    """(age, 2-sigma) via Monte Carlo. Returns (None, None) if unsolvable."""
+    t = _uth_solve(UU, ThU, l230, l234)
+    if t is None:
+        return None, None
+    rng  = np.random.default_rng()
+    ages = [_uth_solve(u, th, l230, l234)
+            for u, th in zip(rng.normal(UU,  dUU  / 2, n_mc),
+                             rng.normal(ThU, dThU / 2, n_mc))]
+
+    ages = [a for a in ages if a is not None]
+    return t, (2 * np.std(ages) if ages else None)
+
+def _uth_det_eq(t, UU, Th0U, Th2U, ini, l230, l234):
+    return ((1 - np.exp(-t * l230))
+            + Th2U * ini * np.exp(-t * l230)
+            + (UU - 1) * l230 / (l230 - l234) * (1 - np.exp(-t * (l230 - l234)))
+            - Th0U)
+
+def _uth_det_solve(UU, Th0U, Th2U, ini, l230, l234):
+    try:
+        if (_uth_det_eq(0.0, UU, Th0U, Th2U, ini, l230, l234)
+                * _uth_det_eq(1e6, UU, Th0U, Th2U, ini, l230, l234) >= 0):
+            return None
+
+        return brentq(_uth_det_eq, 0.0, 1e6,
+                      args=(UU, Th0U, Th2U, ini, l230, l234), xtol=0.01)
+    except Exception:
+        return None
+
+def _uth_det_mc(UU, dUU, Th0U, dTh0U, Th2U, dTh2U, ini, dini, l230, l234, n_mc=5000):
+    t = _uth_det_solve(UU, Th0U, Th2U, ini, l230, l234)
+    if t is None:
+        return None, None
+    rng  = np.random.default_rng()
+    ages = [_uth_det_solve(u, th0, th2, i, l230, l234)
+            for u, th0, th2, i in zip(rng.normal(UU,   dUU   / 2, n_mc),
+                                      rng.normal(Th0U, dTh0U / 2, n_mc),
+                                      rng.normal(Th2U, dTh2U / 2, n_mc),
+                                      rng.normal(ini,  dini  / 2, n_mc))]
+    ages = [a for a in ages if a is not None]
+    return t, (2 * np.std(ages) if ages else None)
+
+# 8.iii. Run the check (only if dating table is present and has U-Th rows)
+
+if len(dating_tb.index) > 0:
+    uth_tb = dating_tb[dating_tb['date_type'].str.contains('U/Th', na=False)].copy()
+
+    if len(uth_tb) == 0:
+        informative('No U-Th dates found in Dating information. Check skipped.', workbook_location='Sheet: Dating information')
+    else:
+        for ent_name in uth_tb['entity_name'].unique():
+            ent = uth_tb[uth_tb['entity_name'] == ent_name].reset_index(drop=True)
+
+            # 8.iv. Ratio-type sanity checks (entity level)
+            a234_vals = ent['234U_238U_activity'].dropna()
+            ini_vals  = ent['ini_230Th_232Th_ratio'].dropna()
+            r02_vals  = ent['230Th_232Th_ratio'].dropna()
+
+            if len(a234_vals) > 0:
+                mean_a234 = float(a234_vals.mean())
+                if mean_a234 <= 0:
+                    error('At entity %s, 234U/238U activity ratio <= 0. d234U appears to have been submitted instead of the activity ratio. ' \
+                        'Convert: activity ratio = 1 + d234U / 1000.' % ent_name, workbook_location='Sheet: Dating information')
+                    error_ctr += 1
+                elif mean_a234 > 10:
+                    error('At entity %s, 234U/238U activity ratio > 10. Most likely d234U has been submitted instead of the activity ratio.'
+                        % ent_name, workbook_location='Sheet: Dating information')
+                    error_ctr += 1
+
+            if len(ini_vals) > 0 and float(ini_vals.mean()) < 0.01:
+                error('At entity %s, ini_230Th/232Th mean (%.4g) < 0.01. Atomic ratio submitted instead of activity ratio.' 
+                    % (ent_name, float(ini_vals.mean())), workbook_location='Sheet: Dating information')
+                error_ctr += 1
+
+            if len(r02_vals) > 0 and float(r02_vals.mean()) < 0.1:
+                error('At entity %s, 230Th/232Th mean (%.4g) < 0.1. Atomic ratio submitted instead of activity ratio.' 
+                    % (ent_name, float(r02_vals.mean())), workbook_location='Sheet: Dating information')
+                error_ctr += 1
+
+            # 8.v. Per-date age recalculation
+            t_uncorr_calc, t_uncorr_rep = [], []
+            t_corr_calc,   t_corr_rep   = [], []
+            any_uncorr_fail = False
+            any_corr_fail   = False
+
+            for _, row in ent.iterrows():
+                l230, l234 = _uth_decay_constants(row.get('decay_constant', ''))
+
+                c238U,  dc238U  = _uth_prepare1(_uth_val(row, '238U_content'),  _uth_val(row, '238U_uncertainty'))
+                c232Th, dc232Th = _uth_prepare1(_uth_val(row, '232Th_content'), _uth_val(row, '232Th_uncertainty'))
+                c230Th, dc230Th = _uth_prepare1(_uth_val(row, '230Th_content'), _uth_val(row, '230Th_uncertainty'))
+                a02,  da02  = _uth_prepare1(_uth_val(row, '230Th_232Th_ratio'), _uth_val(row, '230Th_232Th_ratio_uncertainty'))
+                a08,  da08  = _uth_prepare1(_uth_val(row, '230Th_238U_activity'), _uth_val(row, '230Th_238U_activity_uncertainty'))
+                a48,  da48  = _uth_prepare1(_uth_val(row, '234U_238U_activity'), _uth_val(row, '234U_238U_activity_uncertainty'))
+                ini,  dini  = _uth_prepare1(_uth_val(row, 'ini_230Th_232Th_ratio'), _uth_val(row, 'ini_230Th_232Th_ratio_uncertainty'), rel_err=0.5)
+                rep_uncorr  = _uth_val(row, 'uncorr_age')
+                rep_corr    = _uth_val(row, 'corr_age')
+
+                # --- uncorrected age: 3 pathways ---
+                t_u = None
+                if a08 is not None and a48 is not None:
+                    t_u, _ = _uth_age_mc(a48, da48, a08, da08, l230, l234)
+                elif c238U is not None and c230Th is not None and a48 is not None:
+                    Th0U, dTh0U = _uth_prepare2(c230Th * l230, dc230Th * l230, 0.01,
+                                                c238U  * _L238, dc238U  * _L238, 0.01)
+                    if Th0U is not None:
+                        t_u, _ = _uth_age_mc(a48, da48, Th0U, dTh0U, l230, l234)
+                elif c238U is not None and c232Th is not None and a02 is not None and a48 is not None:
+                    Th2U, dTh2U = _uth_prepare2(c232Th * _L232, dc232Th * _L232, 0.01,
+                                                c238U  * _L238, dc238U  * _L238, 0.01)
+                    if Th2U is not None:
+                        Th0U, dTh0U = _uth_prepare2(a02, da02, 0.01,
+                                                     1 / Th2U, dTh2U / Th2U ** 2, 0.01 / Th2U ** 2)
+                        if Th0U is not None:
+                            t_u, _ = _uth_age_mc(a48, da48, Th0U, dTh0U, l230, l234)
+
+                if t_u is None:
+                    any_uncorr_fail = True
+                else:
+                    t_uncorr_calc.append(t_u)
+                    if rep_uncorr is not None:
+                        t_uncorr_rep.append(rep_uncorr)
+
+                # --- corrected age: 5 pathways (all require ini) ---
+                t_c = None
+                if ini is not None:
+                    if c238U is not None and c232Th is not None and a08 is not None and a48 is not None:
+                        Th2U, dTh2U = _uth_prepare2(c232Th * _L232 / 1000, dc232Th * _L232 / 1000, 0.01,
+                                                    c238U  * _L238,        dc238U  * _L238,         0.01)
+                        if Th2U is not None:
+                            t_c, _ = _uth_det_mc(a48, da48, a08, da08, Th2U, dTh2U, ini, dini, l230, l234)
+                    elif c238U is not None and c232Th is not None and c230Th is not None and a48 is not None:
+                        Th0U, dTh0U = _uth_prepare2(c230Th * l230, dc230Th * l230, 0.01,
+                                                    c238U  * _L238, dc238U  * _L238, 0.01)
+                        Th2U, dTh2U = _uth_prepare2(c232Th * _L232 / 1000, dc232Th * _L232 / 1000, 0.01,
+                                                    c238U  * _L238,        dc238U  * _L238,         0.01)
+                        if Th0U is not None and Th2U is not None:
+                            t_c, _ = _uth_det_mc(a48, da48, Th0U, dTh0U, Th2U, dTh2U, ini, dini, l230, l234)
+                    elif a02 is not None and a08 is not None and a48 is not None:
+                        Th2U, dTh2U = _uth_prepare2(a08, da08, 0.01, a02, da02, 0.01)
+                        if Th2U is not None:
+                            t_c, _ = _uth_det_mc(a48, da48, a08, da08, Th2U, dTh2U, ini, dini, l230, l234)
+                    elif c238U is not None and c232Th is not None and a02 is not None and a48 is not None:
+                        Th2U, dTh2U = _uth_prepare2(c232Th * _L232 / 1000, dc232Th * _L232 / 1000, 0.01,
+                                                    c238U  * _L238,        dc238U  * _L238,         0.01)
+                        if Th2U is not None:
+                            Th0U, dTh0U = _uth_prepare2(a02, da02, 0.01,
+                                                         1 / Th2U, dTh2U / Th2U ** 2, 0.01 / Th2U ** 2)
+                            if Th0U is not None:
+                                t_c, _ = _uth_det_mc(a48, da48, Th0U, dTh0U, Th2U, dTh2U, ini, dini, l230, l234)
+
+                if t_c is None:
+                    any_corr_fail = True
+                else:
+                    t_corr_calc.append(t_c)
+                    if rep_corr is not None:
+                        t_corr_rep.append(rep_corr)
+
+            # 8.vi. Entity-level summary and flagging
+            if not t_uncorr_calc:
+                error('At entity %s, cannot recalculate uncorrected ages. Required isotope data missing. Need one of: '
+                    '(1) 230Th/238U + 234U/238U; '
+                    '(2) 238U_content + 230Th_content + 234U/238U; '
+                    '(3) 238U_content + 232Th_content + 230Th/232Th + 234U/238U.'
+                    % ent_name, workbook_location='Sheet: Dating information')
+                error_ctr += 1
+            elif t_uncorr_rep:
+                mean_calc = np.mean(t_uncorr_calc)
+                pct_off   = abs(mean_calc - np.mean(t_uncorr_rep)) / mean_calc * 100 if mean_calc > 0 else 0
+                if pct_off > 1.0:
+                    error('At entity %s, recalculated uncorrected ages deviate %.1f%% from reported uncorr_age (threshold 1%%). ' \
+                        'Most common cause: d234U submitted instead of 234U/238U activity ratio, or mismatched half-lives.' 
+                        % (ent_name, pct_off), workbook_location='Sheet: Dating information')
+                    error_ctr += 1
+                else:
+                    informative('At entity %s, uncorrected age check passed (%.2f%% mean deviation).' 
+                        % (ent_name, pct_off), workbook_location='Sheet: Dating information')
+            else:
+                informative('At entity %s, uncorr_age not provided. Cannot verify, but data are sufficient to calculate.' 
+                    % ent_name, workbook_location='Sheet: Dating information')
+
+            if not t_corr_calc:
+                informative('At entity %s, cannot recalculate detrital-corrected ages. ' \
+                    'ini_230Th/232Th or other required data missing. Corrected check skipped.' 
+                    % ent_name, workbook_location='Sheet: Dating information')
+            elif t_corr_rep:
+                mean_calc_c = np.mean(t_corr_calc)
+                pct_off_c   = abs(mean_calc_c - np.mean(t_corr_rep)) / mean_calc_c * 100 if mean_calc_c > 0 else 0
+                if pct_off_c > 5.0:
+                    error('At entity %s, recalculated corrected ages deviate %.1f%% from reported corr_age (threshold 5%%). ' \
+                        'Most common cause: ini_230Th/232Th given as atomic ratio instead of activity ratio, or 232Th/238U atomic ratio used.' 
+                        % (ent_name, pct_off_c), workbook_location='Sheet: Dating information')
+                    error_ctr += 1
+                else:
+                    informative('At entity %s, corrected age check passed (%.2f%% mean deviation).' 
+                        % (ent_name, pct_off_c), workbook_location='Sheet: Dating information')
+            else:
+                informative('At entity %s, corr_age not provided. Cannot verify corrected ages.'
+                    % ent_name, workbook_location='Sheet: Dating information')
+
+
+# =============================================================================
+# Section 9. Print out the number of unknowns
 # =============================================================================
 
 
@@ -2766,7 +3045,7 @@ if len(sample_tb.index) > 0:
 
 
 # =============================================================================
-# Section 9. Report QC result
+# Section 10. Report QC result
 # =============================================================================
 
 
@@ -2776,7 +3055,7 @@ if error_ctr < 1:
 
 
 # =============================================================================
-# Section 10. Generate site location map
+# Section 11. Generate site location map
 # =============================================================================
 
 

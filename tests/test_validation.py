@@ -139,11 +139,13 @@ def test_validate_log_with_invalid_json(mock_exec, client, tmp_path, mock_sessio
 def test_validate_subprocess_exception_handled(
     mock_exec, client, tmp_path, mock_session
 ):
-    mock_exec.side_effect = Exception("System out of memory")
+    mock_exec.side_effect = MemoryError("System out of memory")
 
-    with patch("src.services.api_utils.SESSIONS_DIR", str(tmp_path)):
-        with pytest.raises(Exception):
-            client.post(f"/api/validate/{mock_session}")
+    with (
+        patch("src.services.api_utils.SESSIONS_DIR", str(tmp_path)),
+        pytest.raises(MemoryError, match="System out of memory"),
+    ):
+        client.post(f"/api/validate/{mock_session}")
 
 
 # ==========================================

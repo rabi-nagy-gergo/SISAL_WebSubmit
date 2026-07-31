@@ -1,5 +1,5 @@
-import os
 import json
+import os
 
 # Configurational constants
 SESSIONS_DIR = os.getenv("SESSIONS_DIR", "sessions")
@@ -7,8 +7,8 @@ AUTOQC_SCRIPT_PATH = os.getenv("AUTOQC_SCRIPT_PATH", "src/services/wb_check_v15.
 R_PLOT_SCRIPT_PATH = os.getenv("R_PLOT_SCRIPT_PATH", "src/services/run_plots.R")
 
 # Session timeout constants
-SESSION_TIMEOUT_HOURS = float(os.getenv("SESSION_TIMEOUT_HOURS", 2.0))
-SAVED_SESSION_TIMEOUT_HOURS = float(os.getenv("SAVED_SESSION_TIMEOUT_HOURS", 168.0))
+SESSION_TIMEOUT_HOURS = float(os.getenv("SESSION_TIMEOUT_HOURS", "2.0"))
+SAVED_SESSION_TIMEOUT_HOURS = float(os.getenv("SAVED_SESSION_TIMEOUT_HOURS", "168.0"))
 
 
 # ==========================================

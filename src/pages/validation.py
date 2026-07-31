@@ -1,8 +1,9 @@
-import os
-import json
 import asyncio
+import json
+import os
+
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import StreamingResponse, FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 
 from src.services.api_utils import (
     AUTOQC_SCRIPT_PATH,
@@ -77,9 +78,14 @@ async def validate_file(session_id: str):
             paths["output"], "QC_log_" + os.path.splitext(filename)[0] + ".txt"
         )
         raw_log = ""
+
         if os.path.exists(log_path):
-            with open(log_path, "r", encoding="utf-8") as f:
-                raw_log = f.read()
+
+            def _read_log():
+                with open(log_path, "r", encoding="utf-8") as f:
+                    return f.read()
+
+            raw_log = await asyncio.to_thread(_read_log)
 
         report = parse_qc_log_to_json(raw_log)
 
