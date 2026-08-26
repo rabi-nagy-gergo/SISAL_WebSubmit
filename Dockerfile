@@ -2,6 +2,7 @@
 # STAGE 1: Builder
 # Used to compile heavy Python wheels with dev dependencies
 # ==========================================
+
 FROM python:3.11-slim AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -22,12 +23,15 @@ COPY requirements.txt .
 RUN pip install --upgrade pip \
     && pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
 
-
 # ==========================================
 # STAGE 2: Base Runtime
 # Minimal environment with runtime-only libraries
+
 # ==========================================
 FROM python:3.11-slim AS base
+
+# Identifies this image's build cache/layers for cache pruning.
+LABEL project="sisal_websubmit"
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -56,6 +60,7 @@ RUN pip install --upgrade pip \
 # STAGE 3: Development Environment
 # Used for local development with code mounting
 # ==========================================
+
 FROM base AS development
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
@@ -64,6 +69,7 @@ CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload
 # STAGE 4: Production Environment
 # Isolated, slim environment for deployment
 # ==========================================
+
 FROM base AS production
 COPY ./src ./src
 COPY ./web ./web
