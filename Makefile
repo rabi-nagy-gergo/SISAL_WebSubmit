@@ -1,10 +1,18 @@
-.PHONY: debug release down logs test lint format
+.PHONY: debug release down logs test lint format clean-cache
 
 debug:
 	docker compose -f docker-compose.yml -f docker-compose.debug.yml up -d --build
+	docker builder prune -f --filter "label=project=sisal_websubmit"
+	docker image prune -f --filter "label=project=sisal_websubmit"
 
 release:
 	docker compose -f docker-compose.yml -f docker-compose.release.yml up -d --build
+	docker builder prune -f --filter "label=project=sisal_websubmit"
+	docker image prune -f --filter "label=project=sisal_websubmit"
+
+clean-cache:
+	docker builder prune -f --filter "label=project=sisal_websubmit"
+	docker image prune -f --filter "label=project=sisal_websubmit"
 
 down:
 	docker compose down

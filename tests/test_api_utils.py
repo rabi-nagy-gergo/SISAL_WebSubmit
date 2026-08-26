@@ -1,6 +1,12 @@
 import os
+from unittest.mock import patch
 
-from src.services.api_utils import SESSIONS_DIR, get_session_paths, parse_qc_log_to_json
+from src.services.api_utils import (
+    SESSIONS_DIR,
+    get_session_paths,
+    get_sessions_dir_size,
+    parse_qc_log_to_json,
+)
 
 # ==========================================
 # Tests for parse_qc_log_to_json
@@ -153,3 +159,64 @@ def test_get_session_paths_special_characters():
 
     assert paths["base"] == expected_base
     assert paths["input"] == os.path.join(expected_base, "input")
+
+
+# ==========================================
+# Tests for get_sessions_dir_size
+# ==========================================
+
+
+def test_get_sessions_dir_size_non_existent(tmp_path):
+    """Tests that a non-existent directory returns a size of 0."""
+    fake_path = tmp_path / "does_not_exist"
+    assert get_sessions_dir_size(str(fake_path)) == 0
+
+
+def test_get_sessions_dir_size_empty_dir(tmp_path):
+    """Tests that an empty directory returns a size of 0."""
+    empty_dir = tmp_path / "empty"
+    empty_dir.mkdir()
+    assert get_sessions_dir_size(str(empty_dir)) == 0
+
+
+def test_get_sessions_dir_size_with_files(tmp_path):
+    """Tests that the function correctly sums the sizes of files in a directory tree."""
+    root_dir = tmp_path / "test_dir"
+    root_dir.mkdir()
+
+    # Create file in root (10 bytes)
+    file1 = root_dir / "file1.txt"
+    file1.write_bytes(b"0123456789")
+
+    # Create nested subfolder and file (20 bytes)
+    sub_dir = root_dir / "sub"
+    sub_dir.mkdir()
+    file2 = sub_dir / "file2.txt"
+    file2.write_bytes(b"01234567890123456789")
+
+    # Total size should be 30 bytes
+    assert get_sessions_dir_size(str(root_dir)) == 30
+
+
+@patch("os.path.getsize")
+def test_get_sessions_dir_size_oserror(mock_getsize, tmp_path):
+    """Tests that OSError during size retrieval is caught and ignored."""
+    root_dir = tmp_path / "test_dir_error"
+    root_dir.mkdir()
+
+    # Create two dummy files
+    file1 = root_dir / "file1.txt"
+    file1.write_bytes(b"dummy")
+    file2 = root_dir / "file2.txt"
+    file2.write_bytes(b"dummy")
+
+    # Mock getsize to raise an OSError for file1, but return 20 bytes for file2
+    def side_effect(path):
+        if "file1.txt" in path:
+            raise OSError("File deleted during calculation")
+        return 20
+
+    mock_getsize.side_effect = side_effect
+
+    # The function should ignore file1's OSError and return only file2's size
+    assert get_sessions_dir_size(str(root_dir)) == 20

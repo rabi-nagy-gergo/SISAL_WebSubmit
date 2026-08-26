@@ -6,6 +6,7 @@
     <title>Upload - SISAL Web Submit</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="css/stepper.css" rel="stylesheet">
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body class="bg-light d-flex flex-column min-vh-100">
 
@@ -22,16 +23,24 @@
                         <p class="text-muted">Select your SISAL v15 Excel workbook to begin the validation process.</p>
                     </div>
 
-                    <div class="mb-3 text-start">
-                        <input class="form-control form-control-lg" type="file" id="fileInput" accept=".xlsx">
-                        <div id="previous-file-info" class="form-text text-success d-none mt-2">
-                            Previously uploaded file: <strong id="previous-filename"></strong>
-                        </div>
-                        <div class="mt-2 text-danger d-none" id="upload-error">Please select a file!</div>
+                    <div class="alert alert-danger mb-4 d-none" id="upload-server-error" role="alert"></div>
+
+                    <div id="captcha-container" class="d-none mb-4 text-center d-flex justify-content-center">
+                        <div class="cf-turnstile" data-sitekey="0x4AAAAAAEc9CFkOFDq8Wylj" data-theme="light" data-callback="onCaptchaSuccess"></div>
                     </div>
 
-                    <div class="d-flex justify-content-end mt-4 mt-md-5 pt-3 pt-md-4 border-top">
-                        <button class="btn btn-primary btn-lg nav-btn" id="btn-upload">Upload file &rarr;</button>
+                    <div id="upload-section" class="d-none">
+                        <div class="mb-3 text-start">
+                            <input class="form-control form-control-lg" type="file" id="fileInput" accept=".xlsx">
+                            <div id="previous-file-info" class="form-text text-success d-none mt-2">
+                                Previously uploaded file: <strong id="previous-filename"></strong>
+                            </div>
+                            <div class="mt-2 text-danger d-none" id="upload-error">Please select a file!</div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4 mt-md-5 pt-3 pt-md-4 border-top">
+                            <button class="btn btn-primary btn-lg nav-btn" id="btn-upload">Upload file &rarr;</button>
+                        </div>
                     </div>
 
                 </div>
