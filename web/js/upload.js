@@ -46,11 +46,33 @@ window.addEventListener('DOMContentLoaded', async () => {
         if (fileInput.files.length === 0) {
             errorMsg.textContent = 'Please select a file!';
             errorMsg.classList.remove('d-none');
+            document.getElementById('previous-file-info').classList.add('d-none');
+            return;
+        }
+
+        const selectedFile = fileInput.files[0];
+
+        // Checks file type
+        if (!selectedFile.name.toLowerCase().endsWith('.xlsx')) {
+            errorMsg.textContent = 'Invalid file type! Please select a valid Excel (.xlsx) file.';
+            errorMsg.classList.remove('d-none');
+            document.getElementById('previous-file-info').classList.add('d-none');
+            return;
+        }
+
+        // Checks file size
+        const uploadMaxSizeMB = config.upload_max_size_mb || 10;
+        const maxFileSizeBytes = uploadMaxSizeMB * 1024 * 1024;
+
+        if (selectedFile.size > maxFileSizeBytes) {
+            errorMsg.textContent = `File is too large! Maximum allowed size is ${uploadMaxSizeMB} MB.`;
+            errorMsg.classList.remove('d-none');
+            document.getElementById('previous-file-info').classList.add('d-none');
             return;
         }
 
         const formData = new FormData();
-        formData.append('file', fileInput.files[0]);
+        formData.append('file', selectedFile);
 
         if (requiresCaptcha) {
             const turnstileInput = document.querySelector('[name="cf-turnstile-response"]');
@@ -81,7 +103,9 @@ window.addEventListener('DOMContentLoaded', async () => {
                 window.location.href = 'validate.html';
             }
             else {
-                if (requiresCaptcha && typeof turnstile !== 'undefined') {
+                const isCaptchaError = response.status === 403;
+
+                if (isCaptchaError && requiresCaptcha && typeof turnstile !== 'undefined') {
                     turnstile.reset();
                     document.getElementById('upload-section').classList.add('d-none');
                 }
@@ -91,7 +115,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                         'Server storage is currently full.', data.detail ||
                         'Please try again later or contact the site administrator.');
                 }
-                else if (response.status === 400) {
+                else if (isCaptchaError) {
                     showUploadServerError(serverErrorMsg,
                         'Validation failed.', data.detail || 'CAPTCHA verification failed. Please try again.');
                 }

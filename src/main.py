@@ -14,6 +14,7 @@ from src.services.api_utils import (
     SAVED_SESSION_TIMEOUT_HOURS,
     SESSION_TIMEOUT_HOURS,
     SESSIONS_DIR,
+    UPLOAD_MAX_SIZE_MB,
 )
 
 
@@ -101,6 +102,7 @@ async def get_config():
     return {
         "session_timeout_hours": SESSION_TIMEOUT_HOURS,
         "saved_session_timeout_hours": SAVED_SESSION_TIMEOUT_HOURS,
+        "upload_max_size_mb": UPLOAD_MAX_SIZE_MB,
     }
 
 

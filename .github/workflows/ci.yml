@@ -66,13 +66,18 @@ jobs:
       - name: Create placeholder .env files
         run: |
           touch .env
-          echo "APP_PORT=8000" >> .env
+          {
+            echo "APP_PORT=8000"
+            echo "TURNSTILE_SECRET_KEY=dummy-ci-secret"
+          } >> .env
 
           touch .env.debug
           {
             echo "ENVIRONMENT=development"
             echo "SESSION_TIMEOUT_HOURS=2.0"
             echo "SAVED_SESSION_TIMEOUT_HOURS=168.0"
+            echo "SESSIONS_MAX_SIZE_MB=1024"
+            echo "UPLOAD_MAX_SIZE_MB=50"
             echo "SESSIONS_DIR=sessions"
             echo "AUTOQC_SCRIPT_PATH=src/services/wb_check_v15.py"
             echo "R_PLOT_SCRIPT_PATH=src/services/run_plots.R"
@@ -83,6 +88,8 @@ jobs:
             echo "ENVIRONMENT=production"
             echo "SESSION_TIMEOUT_HOURS=2.0"
             echo "SAVED_SESSION_TIMEOUT_HOURS=168.0"
+            echo "SESSIONS_MAX_SIZE_MB=1024"
+            echo "UPLOAD_MAX_SIZE_MB=50"
             echo "SESSIONS_DIR=sessions"
             echo "AUTOQC_SCRIPT_PATH=src/services/wb_check_v15.py"
             echo "R_PLOT_SCRIPT_PATH=src/services/run_plots.R"
@@ -121,13 +128,18 @@ jobs:
       - name: Create placeholder .env files
         run: |
           touch .env
-          echo "APP_PORT=8000" >> .env
+          {
+            echo "APP_PORT=8000"
+            echo "TURNSTILE_SECRET_KEY=dummy-ci-secret"
+          } >> .env
 
           touch .env.debug
           {
             echo "ENVIRONMENT=development"
             echo "SESSION_TIMEOUT_HOURS=2.0"
             echo "SAVED_SESSION_TIMEOUT_HOURS=168.0"
+            echo "SESSIONS_MAX_SIZE_MB=1024"
+            echo "UPLOAD_MAX_SIZE_MB=50"
             echo "SESSIONS_DIR=sessions"
             echo "AUTOQC_SCRIPT_PATH=src/services/wb_check_v15.py"
             echo "R_PLOT_SCRIPT_PATH=src/services/run_plots.R"
@@ -138,6 +150,8 @@ jobs:
             echo "ENVIRONMENT=production"
             echo "SESSION_TIMEOUT_HOURS=2.0"
             echo "SAVED_SESSION_TIMEOUT_HOURS=168.0"
+            echo "SESSIONS_MAX_SIZE_MB=1024"
+            echo "UPLOAD_MAX_SIZE_MB=50"
             echo "SESSIONS_DIR=sessions"
             echo "AUTOQC_SCRIPT_PATH=src/services/wb_check_v15.py"
             echo "R_PLOT_SCRIPT_PATH=src/services/run_plots.R"

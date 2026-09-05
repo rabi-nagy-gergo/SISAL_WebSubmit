@@ -1,17 +1,17 @@
-# FastAPI dependencies
-fastapi>=0.110.0
-uvicorn[standard]>=0.29.0
+# FastAPI & Server dependencies
+fastapi>=0.112.0
+uvicorn[standard]>=0.30.0
 python-multipart>=0.0.9
 
-# SISAL AutoQC dependencies
-pandas
-numpy
-openpyxl
-xlrd
-matplotlib<3.11.0
-cartopy
-shapely
-scipy
+# SISAL AutoQC dependencies (Fixed major versions for stability)
+pandas>=2.0.0,<3.0.0
+numpy>=1.24.0,<2.0.0
+openpyxl>=3.1.0
+xlrd>=2.0.1
+matplotlib>=3.7.0,<3.11.0
+cartopy>=0.22.0
+shapely>=2.0.0
+scipy>=1.10.0
 
 # Python tester dependencies
 pytest
@@ -19,5 +19,5 @@ pytest-asyncio
 pytest-cov
 httpx2
 
-# Linter depedencies
+# Linter dependencies
 ruff
