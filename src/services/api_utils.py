@@ -14,6 +14,9 @@ SAVED_SESSION_TIMEOUT_HOURS = float(os.getenv("SAVED_SESSION_TIMEOUT_HOURS", "16
 # Sessions directory disk quota (in MB)
 SESSIONS_MAX_SIZE_MB = float(os.getenv("SESSIONS_MAX_SIZE_MB", "1024.0"))
 
+# Maximum upload size (in MB)
+UPLOAD_MAX_SIZE_MB = float(os.getenv("UPLOAD_MAX_SIZE_MB", "10.0"))
+
 
 # ==========================================
 # Helpers

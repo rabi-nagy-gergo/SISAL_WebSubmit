@@ -16,9 +16,11 @@ from src.services.api_utils import (
     SESSIONS_DIR,
     SESSIONS_MAX_SIZE_MB,
     TURNSTILE_SECRET_KEY,
+    UPLOAD_MAX_SIZE_MB,
     get_session_paths,
     get_sessions_dir_size,
 )
+from src.services.wb_pre_check import validate_excel_file_in_memory
 
 router = APIRouter()
 
@@ -40,7 +42,6 @@ def verify_turnstile_token(token: str) -> bool:
 
 
 def _read_metadata_sync(path: str) -> dict:
-    """Helper function to read metadata synchronously."""
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -83,10 +84,35 @@ async def upload_file(
     captcha_token: Annotated[str | None, Form()] = None,
     cookie_session_id: Annotated[str | None, Cookie(alias="sisal_session_id")] = None,
 ):
-    current_size_bytes = await asyncio.to_thread(get_sessions_dir_size, SESSIONS_DIR)
-    current_size_mb = current_size_bytes / (1024 * 1024)
+    allowed_excel_mime = (
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
-    if current_size_mb >= SESSIONS_MAX_SIZE_MB:
+    if (
+        not file.filename.lower().endswith(".xlsx")
+        or file.content_type != allowed_excel_mime
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid file type. Only Excel (.xlsx) files are allowed.",
+        )
+
+    upload_max_size_bytes = UPLOAD_MAX_SIZE_MB * 1024 * 1024
+    if file.size and file.size > upload_max_size_bytes:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File is too large. Maximum allowed size is {UPLOAD_MAX_SIZE_MB} MB.",
+        )
+
+    is_valid_format, error_msg = await asyncio.to_thread(
+        validate_excel_file_in_memory, file.file
+    )
+    if not is_valid_format:
+        raise HTTPException(status_code=400, detail=error_msg)
+
+    current_size_bytes = await asyncio.to_thread(get_sessions_dir_size, SESSIONS_DIR)
+    sessions_max_size_bytes = SESSIONS_MAX_SIZE_MB * 1024 * 1024
+    if current_size_bytes >= sessions_max_size_bytes:
         raise HTTPException(
             status_code=507,
             detail=(
@@ -118,14 +144,14 @@ async def upload_file(
     if not is_valid_session:
         if not captcha_token:
             raise HTTPException(
-                status_code=400,
+                status_code=403,
                 detail="CAPTCHA verification is required for new uploads.",
             )
 
         is_human = await asyncio.to_thread(verify_turnstile_token, captcha_token)
         if not is_human:
             raise HTTPException(
-                status_code=400, detail="Invalid CAPTCHA. Please try again."
+                status_code=403, detail="Invalid CAPTCHA. Please try again."
             )
 
         session_id = str(uuid.uuid4())
