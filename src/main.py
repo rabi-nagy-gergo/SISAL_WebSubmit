@@ -66,10 +66,16 @@ async def garbage_collector():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # CPU-based semaphore initialization
+    cpu_count = os.cpu_count() or 2
+    max_concurrent = max(1, cpu_count - 1)
+    app.state.script_semaphore = asyncio.Semaphore(max_concurrent)
+
     # On server startup: Create session directory and start garbage collector.
     os.makedirs(SESSIONS_DIR, exist_ok=True)
     gc_task = asyncio.create_task(garbage_collector())
     yield
+
     # On server shutdown: Shut down garbage collector.
     gc_task.cancel()
 
