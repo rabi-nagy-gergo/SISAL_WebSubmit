@@ -1,7 +1,11 @@
 services:
   api:
+    image: sisal_websubmit:v${APP_VERSION:-latest}
+    container_name: sisal_websubmit-v${APP_VERSION:-latest}
     build:
       context: .
+      args:
+        - APP_VERSION=${APP_VERSION:-latest}
       labels:
         - "project=sisal_websubmit"
     ports:
@@ -14,3 +18,7 @@ services:
 
 volumes:
   sisal_sessions:
+
+networks:
+  default:
+    name: sisal_network
