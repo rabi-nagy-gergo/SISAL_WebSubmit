@@ -26,12 +26,15 @@ RUN pip install --upgrade pip \
 # ==========================================
 # STAGE 2: Base Runtime
 # Minimal environment with runtime-only libraries
-
 # ==========================================
+
 FROM python:3.11-slim AS base
 
-# Identifies this image's build cache/layers for cache pruning.
+ARG APP_VERSION=latest
+ENV APP_VERSION=${APP_VERSION}
+
 LABEL project="sisal_websubmit"
+LABEL version="${APP_VERSION}"
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
