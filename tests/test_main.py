@@ -157,3 +157,65 @@ def test_lifespan_creates_sessions_directory(tmp_path):
         with TestClient(app):
             # Assert: The lifespan should have created the directory
             assert test_sessions_dir.is_dir()
+
+
+# ==========================================
+# SUITE 4: Web Pages (Jinja2 Templates)
+# Tests the dynamic HTML serving and page routing
+# ==========================================
+
+
+def test_serve_pages_root_redirects_to_index(client):
+    """Tests that accessing the root URL ('/') serves the index page."""
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert "SISAL Web Submit" in response.text
+    assert "<base href=" in response.text
+
+
+@pytest.mark.parametrize(
+    "page",
+    [
+        "index",
+        "stepper",
+        "upload",
+        "validate",
+        "plots",
+        "download",
+        "about",
+    ],
+)
+def test_serve_pages_valid_pages_return_html(client, page):
+    """Tests that all explicitly permitted pages are served correctly."""
+    response = client.get(f"/{page}.html")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+
+    if page != "stepper":
+        assert "<base href=" in response.text
+
+
+def test_serve_pages_invalid_page_returns_404(client):
+    """Tests that attempting to access a page not in the valid_pages list returns a 404."""
+    response = client.get("/nonexistent.html")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Page not found"}
+
+
+def test_serve_pages_directory_traversal_blocked(client):
+    """Tests that directory traversal attempts are safely caught by the whitelist."""
+    response = client.get("/../../etc/passwd.html")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Not Found"}
+
+
+@patch("src.main.ROOT_PATH", "/TEST_SUBFOLDER")
+def test_serve_pages_jinja2_injects_root_path(client):
+    """Tests that the Jinja2 template engine correctly injects the ROOT_PATH into the base tag."""
+    response = client.get("/about.html")
+    assert response.status_code == 200
+
+    assert '<base href="/TEST_SUBFOLDER/">' in response.text

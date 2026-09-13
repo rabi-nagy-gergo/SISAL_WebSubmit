@@ -2,6 +2,7 @@ import json
 import os
 
 # Configurational constants
+ROOT_PATH = os.getenv("ROOT_PATH", "")
 SESSIONS_DIR = os.getenv("SESSIONS_DIR", "sessions")
 AUTOQC_SCRIPT_PATH = os.getenv("AUTOQC_SCRIPT_PATH", "src/services/wb_check_v15.py")
 R_PLOT_SCRIPT_PATH = os.getenv("R_PLOT_SCRIPT_PATH", "src/services/run_plots.R")
