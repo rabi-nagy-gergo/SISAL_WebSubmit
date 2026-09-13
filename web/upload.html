@@ -24,8 +24,6 @@
                         <p class="text-muted">Select your SISAL v15 Excel workbook to begin the validation process.</p>
                     </div>
 
-                    <div class="alert alert-danger mb-4 d-none" id="upload-server-error" role="alert"></div>
-
                     <div id="captcha-container" class="d-none mb-4 text-center d-flex justify-content-center">
                         <div class="cf-turnstile" data-sitekey="0x4AAAAAAEc9CFkOFDq8Wylj" data-theme="light" data-callback="onCaptchaSuccess"></div>
                     </div>
@@ -38,6 +36,8 @@
                             </div>
                             <div class="mt-2 text-danger d-none" id="upload-error">Please select a file!</div>
                         </div>
+
+                        <div class="alert alert-danger mt-4 mb-0 d-none" id="upload-server-error" role="alert"></div>
 
                         <div class="d-flex justify-content-end mt-4 mt-md-5 pt-3 pt-md-4 border-top">
                             <button class="btn btn-primary btn-lg nav-btn" id="btn-upload">Upload file &rarr;</button>
