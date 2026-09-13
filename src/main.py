@@ -13,6 +13,7 @@ from fastapi.templating import Jinja2Templates
 
 from src.pages import download, plots, upload, validation
 from src.services.api_utils import (
+    APP_VERSION,
     ROOT_PATH,
     SAVED_SESSION_TIMEOUT_HOURS,
     SESSION_TIMEOUT_HOURS,
@@ -146,11 +147,20 @@ async def serve_pages(request: Request, page: str = "index"):
     if page not in valid_pages:
         raise HTTPException(status_code=404, detail="Page not found")
 
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         request=request,
         name=f"{page}.html",
-        context={"request": request, "root_path": ROOT_PATH},
+        context={
+            "request": request,
+            "root_path": ROOT_PATH,
+            "app_version": APP_VERSION,
+        },
     )
+
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 
 app.mount("/", StaticFiles(directory="web"), name="web_static")

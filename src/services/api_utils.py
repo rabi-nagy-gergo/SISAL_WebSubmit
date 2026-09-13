@@ -1,6 +1,9 @@
 import json
 import os
 
+# App version
+APP_VERSION = os.getenv("APP_VERSION", "1.0.0")
+
 # Configurational constants
 ROOT_PATH = os.getenv("ROOT_PATH", "")
 SESSIONS_DIR = os.getenv("SESSIONS_DIR", "sessions")

@@ -7,7 +7,8 @@ async function loadStepper(currentStep) {
     if (!container) return;
     
     try {
-        const response = await fetch('stepper.html');
+        const timestamp = new Date().getTime();
+        const response = await fetch(`stepper.html?v=${timestamp}`);
         const html = await response.text();
         container.innerHTML = html;
         
