@@ -15,7 +15,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('previous-file-info').classList.remove('d-none');
     }
 
-    // Check if CAPTCHA is required based on session validity
     try {
         const captchaResp = await fetch(`${API_BASE_URL}/upload/requires-captcha`, {
             credentials: 'same-origin'
@@ -35,11 +34,19 @@ window.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('upload-section').classList.remove('d-none');
     }
 
-    document.getElementById('btn-upload').addEventListener('click', async () => {
-        const fileInput = document.getElementById('fileInput');
-        const errorMsg = document.getElementById('upload-error');
-        const serverErrorMsg = document.getElementById('upload-server-error');
+    const fileInput = document.getElementById('fileInput');
+    const btnUpload = document.getElementById('btn-upload');
+    const errorMsg = document.getElementById('upload-error');
+    const serverErrorMsg = document.getElementById('upload-server-error');
 
+    // Re-enable the button and hide errors when a new file is selected
+    fileInput.addEventListener('change', () => {
+        btnUpload.disabled = false;
+        errorMsg.classList.add('d-none');
+        serverErrorMsg.classList.add('d-none');
+    });
+
+    btnUpload.addEventListener('click', async () => {
         serverErrorMsg.classList.add('d-none');
         errorMsg.classList.add('d-none');
 
@@ -52,7 +59,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
         const selectedFile = fileInput.files[0];
 
-        // Checks file type
         if (!selectedFile.name.toLowerCase().endsWith('.xlsx')) {
             errorMsg.textContent = 'Invalid file type! Please select a valid Excel (.xlsx) file.';
             errorMsg.classList.remove('d-none');
@@ -60,7 +66,6 @@ window.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // Checks file size
         const uploadMaxSizeMB = config.upload_max_size_mb || 10;
         const maxFileSizeBytes = uploadMaxSizeMB * 1024 * 1024;
 
@@ -86,13 +91,36 @@ window.addEventListener('DOMContentLoaded', async () => {
             formData.append('captcha_token', captchaToken);
         }
 
+        // Disable button during the upload process
+        btnUpload.disabled = true;
+
         try {
             const response = await fetch(`${API_BASE_URL}/upload`, {
                 method: 'POST',
                 body: formData,
                 credentials: 'same-origin'
             });
-            const data = await response.json();
+            
+            // Handle unexpected non-JSON responses gracefully (e.g., Proxy HTML errors)
+            let data;
+            const contentType = response.headers.get("content-type");
+            
+            if (contentType && contentType.includes("application/json")) {
+                data = await response.json();
+            } else {
+                let errorDetail = `Unexpected response from server (HTTP ${response.status}).`;
+                
+                switch (response.status) {
+                    case 413: errorDetail = 'The file is too large for the web server proxy (HTTP 413).'; break;
+                    case 429: errorDetail = 'Too many requests. You have been rate-limited (HTTP 429).'; break;
+                    case 500: errorDetail = 'Internal Server Error (HTTP 500).'; break;
+                    case 502: errorDetail = 'Bad Gateway. The backend container might be restarting (HTTP 502).'; break;
+                    case 504: errorDetail = 'Gateway Timeout. The proxy dropped the connection (HTTP 504).'; break;
+                }
+                
+                data = { status: 'error', detail: errorDetail };
+                Object.defineProperty(response, 'ok', { value: false });
+            }
 
             if (response.ok && data.status === 'success') {
                 sessionStorage.setItem('sisal_uploaded_filename', fileInput.files[0].name);
@@ -107,31 +135,21 @@ window.addEventListener('DOMContentLoaded', async () => {
 
                 if (isCaptchaError && requiresCaptcha && typeof turnstile !== 'undefined') {
                     turnstile.reset();
-                    document.getElementById('upload-section').classList.add('d-none');
                 }
 
                 if (response.status === 507) {
-                    showUploadServerError(serverErrorMsg,
-                        'Server storage is currently full.', data.detail ||
-                        'Please try again later or contact the site administrator.');
+                    showUploadServerError(serverErrorMsg, 'Server storage is currently full.', data.detail || 'Please try again later.');
                 }
                 else if (isCaptchaError) {
-                    showUploadServerError(serverErrorMsg,
-                        'Validation failed.', data.detail || 'CAPTCHA verification failed. Please try again.');
+                    showUploadServerError(serverErrorMsg, 'Validation failed.', data.detail || 'CAPTCHA verification failed.');
                 }
                 else {
-                    showUploadServerError(serverErrorMsg,
-                        'Upload failed.', data.detail || 'An unexpected error occurred. Please try again.');
+                    showUploadServerError(serverErrorMsg, 'Upload failed.', data.detail || 'An unexpected error occurred.');
                 }
             }
         } 
         catch (error) {
-            if (requiresCaptcha && typeof turnstile !== 'undefined') {
-                turnstile.reset();
-                document.getElementById('upload-section').classList.add('d-none');
-            }
-            showUploadServerError(serverErrorMsg,
-                'Connection error.', 'Could not reach the server. Please check your connection and try again.');
+            showUploadServerError(serverErrorMsg, 'Connection error.', 'Could not reach the server. Please check your connection and try again.');
             console.error(error);
         }
     });
