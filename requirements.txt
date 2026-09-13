@@ -1,5 +1,6 @@
 # FastAPI & Server dependencies
 fastapi>=0.112.0
+jinja2
 uvicorn[standard]>=0.30.0
 python-multipart>=0.0.9
 

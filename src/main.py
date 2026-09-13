@@ -5,12 +5,15 @@ import shutil
 import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 from src.pages import download, plots, upload, validation
 from src.services.api_utils import (
+    ROOT_PATH,
     SAVED_SESSION_TIMEOUT_HOURS,
     SESSION_TIMEOUT_HOURS,
     SESSIONS_DIR,
@@ -85,7 +88,14 @@ async def lifespan(app: FastAPI):
 # ==========================================
 
 
-app = FastAPI(title="SISAL AutoQC API", lifespan=lifespan)
+app = FastAPI(title="SISAL AutoQC API", lifespan=lifespan, root_path=ROOT_PATH)
+
+
+@app.middleware("http")
+async def override_proxy_prefix(request: Request, call_next):
+    request.scope["root_path"] = ROOT_PATH
+    return await call_next(request)
+
 
 # CORS settings
 app.add_middleware(
@@ -112,5 +122,35 @@ async def get_config():
     }
 
 
-# Mount frontend code to root directory
-app.mount("/", StaticFiles(directory="web", html=True), name="web")
+# ==========================================
+# Web / Jinja2 Templates
+# ==========================================
+
+
+templates = Jinja2Templates(directory="web")
+
+
+@app.get("/", response_class=HTMLResponse)
+@app.get("/{page}.html", response_class=HTMLResponse)
+async def serve_pages(request: Request, page: str = "index"):
+    valid_pages = [
+        "index",
+        "stepper",
+        "upload",
+        "validate",
+        "plots",
+        "download",
+        "about",
+    ]
+
+    if page not in valid_pages:
+        raise HTTPException(status_code=404, detail="Page not found")
+
+    return templates.TemplateResponse(
+        request=request,
+        name=f"{page}.html",
+        context={"request": request, "root_path": ROOT_PATH},
+    )
+
+
+app.mount("/", StaticFiles(directory="web"), name="web_static")
