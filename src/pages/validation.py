@@ -119,11 +119,13 @@ async def validate_file(session_id: str, request: Request):
     headers = {
         "X-Accel-Buffering": "no",
         "Cache-Control": "no-cache",
-        "Connection": "keep-alive"
+        "Connection": "keep-alive",
     }
 
     # Using StreamingResponse with NDJSON format
-    return StreamingResponse(generate_response(), media_type="application/x-ndjson", headers = headers)
+    return StreamingResponse(
+        generate_response(), media_type="application/x-ndjson", headers=headers
+    )
 
 
 # ==========================================

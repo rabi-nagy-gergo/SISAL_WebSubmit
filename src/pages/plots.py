@@ -105,11 +105,13 @@ async def run_plots(session_id: str, request: Request):
     headers = {
         "X-Accel-Buffering": "no",
         "Cache-Control": "no-cache",
-        "Connection": "keep-alive"
+        "Connection": "keep-alive",
     }
 
     # Using StreamingResponse with NDJSON format
-    return StreamingResponse(generate_response(), media_type="application/x-ndjson", headers = headers)
+    return StreamingResponse(
+        generate_response(), media_type="application/x-ndjson", headers=headers
+    )
 
 
 @router.get("/api/plots/{session_id}")
