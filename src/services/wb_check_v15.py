@@ -1284,7 +1284,7 @@ else:
 # =============================================================================
 
 
-status_msg(40, "Data Validation", "Validating Entity metadata...")
+status_msg(35, "Data Validation", "Validating Entity metadata...")
 
 #Check that table has records
 if len(entity_tb.index) == 0:
@@ -1752,7 +1752,7 @@ else:
 # =============================================================================
 
 
-status_msg(60, "Data Validation", "Validating Sample data and Hiatuses...")
+status_msg(45, "Data Validation", "Validating Sample data and Hiatuses...")
 
 if len(sample_tb.index) == 0:
     fatal('There are no samples filled in. The checks will terminate here.', workbook_location='Sheet: Sample data')
@@ -2053,7 +2053,7 @@ for i in set(sample_tb_no_agemodel['entity_name']):
 # =============================================================================
 
 
-status_msg(80, "Data Validation", "Validating Dating information...")
+status_msg(55, "Data Validation", "Validating Dating information...")
 
 if len(dating_tb.index) > 0:
 
@@ -2745,7 +2745,7 @@ for i in entity_tb['entity_name']:
 # Python/JSON integration (G)
 # =============================================================================
 
-status_msg(85, "Data Validation", "Performing U-Th age credibility check...")
+status_msg(65, "U-Th Credibility Check", "Recalculating U-Th ages independently from isotope ratios...")
 
 # 8.i. Decay constants
 
@@ -3059,7 +3059,7 @@ if error_ctr < 1:
 # =============================================================================
 
 
-status_msg(95, "Map Generation", "Generating regional site map...")
+status_msg(80, "Map Generation", "Generating regional site map...")
 
 try:
     span = 15  # degrees on each side of the site

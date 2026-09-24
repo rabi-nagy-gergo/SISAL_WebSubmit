@@ -101,8 +101,17 @@ async def run_plots(session_id: str, request: Request):
                 + "\n"
             )
 
+    # Disable proxy buffering to ensure real-time streaming of NDJSON
+    headers = {
+        "X-Accel-Buffering": "no",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+    }
+
     # Using StreamingResponse with NDJSON format
-    return StreamingResponse(generate_response(), media_type="application/x-ndjson")
+    return StreamingResponse(
+        generate_response(), media_type="application/x-ndjson", headers=headers
+    )
 
 
 @router.get("/api/plots/{session_id}")
