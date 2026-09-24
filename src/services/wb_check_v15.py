@@ -2745,7 +2745,7 @@ for i in entity_tb['entity_name']:
 # Python/JSON integration (G)
 # =============================================================================
 
-status_msg(65, "U-Th Credibility Check", "Recalculating U-Th ages independently from isotope ratios")
+status_msg(65, "U-Th Credibility Check", "Recalculating U-Th ages independently from isotope ratios...")
 
 # 8.i. Decay constants
 
