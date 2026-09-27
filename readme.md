@@ -32,6 +32,8 @@ The SISAL Web Submit project transforms the previously decentralized, local vali
 
 This application automates the validation process by providing a user-friendly interface built with Vanilla HTML, Bootstrap, and Vanilla JavaScript, connected to a stateless, file-system-based FastAPI backend. It allows contributors to run complex quality control (AutoQC) and plotting scripts seamlessly from their browsers.
 
+The live web application is publicly accessible and can be viewed by anyone at: [geochem.hu/SISAL_autoQC/](https://geochem.hu/SISAL_autoQC/)
+
 ## Submission Workflow
 The data submission process is divided into the following sequential stages:
 
