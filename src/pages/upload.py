@@ -6,7 +6,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Cookie, File, Form, HTTPException, UploadFile
@@ -66,7 +66,7 @@ async def check_captcha_requirement(
                 meta = await asyncio.to_thread(
                     _read_metadata_sync, temp_paths["metadata"]
                 )
-                now = datetime.now(timezone.utc).timestamp()
+                now = datetime.now(UTC).timestamp()
                 if now <= meta.get("expires_at", 0):
                     return {"requires_captcha": False}
             except (OSError, json.JSONDecodeError):
@@ -134,7 +134,7 @@ async def upload_file(
                 meta = await asyncio.to_thread(
                     _read_metadata_sync, temp_paths["metadata"]
                 )
-                now = datetime.now(timezone.utc).timestamp()
+                now = datetime.now(UTC).timestamp()
                 if now <= meta.get("expires_at", 0):
                     session_id = cookie_session_id
                     is_valid_session = True
@@ -170,7 +170,7 @@ async def upload_file(
             shutil.copyfileobj(file.file, file_object)
 
         expires_at = (
-            datetime.now(timezone.utc) + timedelta(hours=SESSION_TIMEOUT_HOURS)
+            datetime.now(UTC) + timedelta(hours=SESSION_TIMEOUT_HOURS)
         ).timestamp()
         metadata = {"saved": False, "expires_at": expires_at}
 
