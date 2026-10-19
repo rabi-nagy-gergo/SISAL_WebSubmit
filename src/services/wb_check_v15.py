@@ -8,6 +8,14 @@ Created on Tue Apr 25 14:30:18 2017
 
 Codes check the workbooks and inform the uploader of the checks
 
+19 October 2026 (G)
+    - Fixed U-Th detrital-corrected age check (Section 8): recalculated ages are now normalized to BP (1950) by subtracting (chem_year - 1950), 
+        resolving false positives for young speleothems.
+    - Added fallback logic when chem_year is missing: flags deviation only if the absolute age difference exceeds ±80 years 
+        in addition to exceeding the 5% relative tolerance.
+    - Refactored corrected age evaluation from entity-wide mean comparison to per-date evaluation, 
+        preventing compensating errors and providing exact row numbers for failing entries.
+
 22 July 2026 (G)
     - Introduced a strict separation between critical errors and non-critical warnings by implementing a new error_ctr.
     - Updated helper function signatures: added a severity parameter (defaulting to 'warning') to 
@@ -2894,11 +2902,14 @@ if len(dating_tb.index) > 0:
 
             # 8.v. Per-date age recalculation
             t_uncorr_calc, t_uncorr_rep = [], []
-            t_corr_calc,   t_corr_rep   = [], []
+            
+            # List to store data needed for corrected age verification per date
+            t_corr_dates_info = []  # (row_index, t_c_calc, rep_corr, chem_year)
+            
             any_uncorr_fail = False
             any_corr_fail   = False
 
-            for _, row in ent.iterrows():
+            for idx, row in ent.iterrows():
                 l230, l234 = _uth_decay_constants(row.get('decay_constant', ''))
 
                 c238U,  dc238U  = _uth_prepare1(_uth_val(row, '238U_content'),  _uth_val(row, '238U_uncertainty'))
@@ -2908,8 +2919,10 @@ if len(dating_tb.index) > 0:
                 a08,  da08  = _uth_prepare1(_uth_val(row, '230Th_238U_activity'), _uth_val(row, '230Th_238U_activity_uncertainty'))
                 a48,  da48  = _uth_prepare1(_uth_val(row, '234U_238U_activity'), _uth_val(row, '234U_238U_activity_uncertainty'))
                 ini,  dini  = _uth_prepare1(_uth_val(row, 'ini_230Th_232Th_ratio'), _uth_val(row, 'ini_230Th_232Th_ratio_uncertainty'), rel_err=0.5)
+                
                 rep_uncorr  = _uth_val(row, 'uncorr_age')
                 rep_corr    = _uth_val(row, 'corr_age')
+                chem_year   = _uth_val(row, 'chem_year')
 
                 # --- uncorrected age: 3 pathways ---
                 t_u = None
@@ -2967,9 +2980,8 @@ if len(dating_tb.index) > 0:
                 if t_c is None:
                     any_corr_fail = True
                 else:
-                    t_corr_calc.append(t_c)
                     if rep_corr is not None:
-                        t_corr_rep.append(rep_corr)
+                        t_corr_dates_info.append((idx, t_c, rep_corr, chem_year))
 
             # 8.vi. Entity-level summary and flagging
             if not t_uncorr_calc:
@@ -2994,25 +3006,47 @@ if len(dating_tb.index) > 0:
                 informative('At entity %s, uncorr_age not provided. Cannot verify, but data are sufficient to calculate.' 
                     % ent_name, workbook_location='Sheet: Dating information')
 
-            if not t_corr_calc:
-                informative('At entity %s, cannot recalculate detrital-corrected ages. ' \
-                    'ini_230Th/232Th or other required data missing. Corrected check skipped.' 
+            # --- Per-date verification logic for corrected ages ---
+            if not t_corr_dates_info:
+                informative('At entity %s, cannot recalculate detrital-corrected ages, or corr_age not provided. ' \
+                    'Corrected check skipped.' 
                     % ent_name, workbook_location='Sheet: Dating information')
-            elif t_corr_rep:
-                mean_calc_c = np.mean(t_corr_calc)
-                pct_off_c   = abs(mean_calc_c - np.mean(t_corr_rep)) / mean_calc_c * 100 if mean_calc_c > 0 else 0
-                if pct_off_c > 5.0:
-                    error('At entity %s, recalculated corrected ages deviate %.1f%% from reported corr_age (threshold 5%%). ' \
-                        'Most common cause: ini_230Th/232Th given as atomic ratio instead of activity ratio, or 232Th/238U atomic ratio used.' 
-                        % (ent_name, pct_off_c), workbook_location='Sheet: Dating information')
+            else:
+                bad_dates = []
+                all_pct_off_c = []
+                for idx, t_c, rep_corr, chem_year in t_corr_dates_info:
+                    if chem_year is not None:
+                        # Convert recalculated age to BP 1950 by subtracting (chem_year - 1950)
+                        t_c_bp = t_c - (chem_year - 1950)
+                        diff = abs(t_c_bp - rep_corr)
+                        pct_off_c = (diff / abs(t_c_bp) * 100) if t_c_bp != 0 else 0
+                        all_pct_off_c.append(pct_off_c)
+                        
+                        if pct_off_c > 5.0:
+                            bad_dates.append((idx, pct_off_c))
+                    else:
+                        # Fallback: if chem_year is missing, flag 5% threshold only 
+                        # if absolute difference exceeds ±80 yr
+                        diff = abs(t_c - rep_corr)
+                        pct_off_c = (diff / abs(t_c) * 100) if t_c != 0 else 0
+                        all_pct_off_c.append(pct_off_c)
+                        
+                        if pct_off_c > 5.0 and diff > 80.0:
+                            bad_dates.append((idx, pct_off_c))
+                
+                if bad_dates:
+                    rows_str = ", ".join([str(d[0] + 3) for d in bad_dates])
+                    max_dev = max([d[1] for d in bad_dates])
+                    error('At entity %s, recalculated corrected ages deviate from reported corr_age (max deviation: %.1f%%, threshold 5%%) ' \
+                        'at row(s): %s. Most common cause: ini_230Th/232Th given as atomic ratio instead of activity ratio, ' \
+                        'or 232Th/238U atomic ratio used.' % (ent_name, max_dev, rows_str), 
+                        workbook_location='Sheet: Dating information')
                     error_ctr += 1
                 else:
-                    informative('At entity %s, corrected age check passed (%.2f%% mean deviation).' 
-                        % (ent_name, pct_off_c), workbook_location='Sheet: Dating information')
-            else:
-                informative('At entity %s, corr_age not provided. Cannot verify corrected ages.'
-                    % ent_name, workbook_location='Sheet: Dating information')
-
+                    # Calculate the mean of the collected percentage deviations
+                    mean_pct = np.mean(all_pct_off_c) if all_pct_off_c else 0.0
+                    informative('At entity %s, corrected age check passed on a per-date basis (%.2f%% mean deviation).' 
+                        % (ent_name, mean_pct), workbook_location='Sheet: Dating information')
 
 # =============================================================================
 # Section 9. Print out the number of unknowns

@@ -3,7 +3,7 @@ import json
 import os
 import shutil
 import zipfile
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
@@ -111,7 +111,7 @@ async def save_session(session_id: str):
 
     # Set session expiry.
     expires_at = (
-        datetime.now(timezone.utc) + timedelta(hours=SAVED_SESSION_TIMEOUT_HOURS)
+        datetime.now(UTC) + timedelta(hours=SAVED_SESSION_TIMEOUT_HOURS)
     ).timestamp()
     metadata = {"saved": True, "expires_at": expires_at}
 

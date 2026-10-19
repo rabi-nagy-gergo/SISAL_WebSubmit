@@ -1,6 +1,6 @@
 import json
 import urllib.error
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 from src.pages.upload import verify_turnstile_token
@@ -215,7 +215,7 @@ def test_requires_captcha_valid_cookie(client, tmp_path):
     session_dir = tmp_path / session_id
     session_dir.mkdir(parents=True)
 
-    expires = (datetime.now(timezone.utc) + timedelta(hours=1)).timestamp()
+    expires = (datetime.now(UTC) + timedelta(hours=1)).timestamp()
     with open(session_dir / "metadata.json", "w", encoding="utf-8") as f:
         json.dump({"expires_at": expires}, f)
 
@@ -233,7 +233,7 @@ def test_requires_captcha_expired_cookie(client, tmp_path):
     session_dir = tmp_path / session_id
     session_dir.mkdir(parents=True)
 
-    expires = (datetime.now(timezone.utc) - timedelta(hours=1)).timestamp()
+    expires = (datetime.now(UTC) - timedelta(hours=1)).timestamp()
     with open(session_dir / "metadata.json", "w", encoding="utf-8") as f:
         json.dump({"expires_at": expires}, f)
 
@@ -439,7 +439,7 @@ def test_upload_with_valid_session_cookie_reuses_session(
     old_file = session_dir / "input" / "old_file.txt"
     old_file.write_text("old data")
 
-    expires = (datetime.now(timezone.utc) + timedelta(hours=1)).timestamp()
+    expires = (datetime.now(UTC) + timedelta(hours=1)).timestamp()
     with open(session_dir / "metadata.json", "w", encoding="utf-8") as f:
         json.dump({"expires_at": expires}, f)
 
