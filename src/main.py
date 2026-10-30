@@ -137,13 +137,10 @@ async def serve_pages(request: Request, page: str = "index"):
     valid_pages = [
         "index",
         "stepper",
-        "navbar",
-        "autoqc_proxy",
         "upload",
         "validate",
         "plots",
         "download",
-        "tutorial",
         "about",
     ]
 
