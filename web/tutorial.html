@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="{{ root_path }}/">
+    <title>Tutorial - SISAL Web Submit</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" >
+    <link href="css/tutorial.css?v={{ app_version }}" rel="stylesheet">
+</head>
+<body class="bg-light d-flex flex-column min-vh-100">
+
+<div class="container py-4 py-md-5 flex-grow-1">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+
+            <div class="text-center mb-4">
+                <h2 class="fw-bold mb-1">Submission Tutorial</h2>
+                <h5 class="text-muted fw-normal">A step-by-step guide for data contributors</h5>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- Overview                                                     -->
+            <!-- ============================================================ -->
+            <div class="card shadow-sm border-0 rounded-3 mb-5" id="overview">
+                <div class="card-header bg-primary text-white fw-bold d-flex align-items-center py-3 rounded-top card-toggle" role="button" tabindex="0"
+                     data-bs-toggle="collapse" data-bs-target="#overview-body" aria-expanded="false" aria-controls="overview-body">
+                    <i class="bi bi-signpost-split-fill me-2 fs-5"></i> Overview
+                    <i class="bi bi-chevron-down ms-auto card-chevron"></i>
+                </div>
+                <div class="card-body collapse show p-4 p-md-5" id="overview-body">
+
+                    <p class="text-muted text-justify">
+                        This tutorial guides data contributors through submitting new speleothem data to SISAL with the
+                        <strong>SISAL Web Submit</strong> application. It is written for authors of a publication that generated speleothem
+                        data, as well as for independent data contributors.
+                    </p>
+                    <p class="text-muted text-justify">
+                        By the end of the tutorial, you will have a QC-checked workbook and a single <code>.zip</code> package containing
+                        the validated workbook, the generated plots, a site map and a diagnostic report, ready to be forwarded to the SISAL 
+                        data stewards. The automated steps usually take only a few minutes each, depending on the size of the workbook and 
+                        the number of entities it contains. Most of the time is typically spent on filling in the workbook.
+                    </p>
+                    <p class="text-muted text-justify">
+                        The workflow starts offline with the Excel template, and continues in the browser through four phases 
+                        (<a href="tutorial.html#figure-t1" class="text-decoration-none">Figure T1</a>). Only a workbook without 
+                        errors may proceed from the validation to the plotting phase, and only plots accepted by the contributor 
+                        lead to the download phase. If the validation reports errors or the plots reveal a problem, the workbook 
+                        has to be corrected and uploaded again. Warnings do not stop the process, but it is recommended to eliminate 
+                        them as well.
+                    </p>
+                    <p class="text-muted text-justify mb-4">
+                        For the background of the application and its place in the SISAL submission workflow, see the
+                        <a href="about.html#sisal-web-submit" class="text-decoration-none">About</a> page. A more technical description of
+                        the processing steps is given in the execution flowchart
+                        (<a href="about.html#figure-s5" class="text-decoration-none">Figure S5</a>).
+                    </p>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md">
+                            <a href="tutorial.html#preparation" class="text-decoration-none">
+                                <div class="border rounded-3 p-3 h-100 text-center">
+                                    <i class="bi bi-file-earmark-excel fs-3 text-primary"></i>
+                                    <h6 class="fw-bold text-dark mt-2 mb-1">Preparation</h6>
+                                    <p class="text-muted small mb-0">Steps 1-2</p>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md">
+                            <a href="tutorial.html#upload" class="text-decoration-none">
+                                <div class="border rounded-3 p-3 h-100 text-center">
+                                    <i class="bi bi-cloud-upload fs-3 text-primary"></i>
+                                    <h6 class="fw-bold text-dark mt-2 mb-1">Upload</h6>
+                                    <p class="text-muted small mb-0">Steps 3-7</p>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md">
+                            <a href="tutorial.html#validation" class="text-decoration-none">
+                                <div class="border rounded-3 p-3 h-100 text-center">
+                                    <i class="bi bi-clipboard2-check fs-3 text-primary"></i>
+                                    <h6 class="fw-bold text-dark mt-2 mb-1">Validation</h6>
+                                    <p class="text-muted small mb-0">Steps 8-10</p>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md">
+                            <a href="tutorial.html#plotting" class="text-decoration-none">
+                                <div class="border rounded-3 p-3 h-100 text-center">
+                                    <i class="bi bi-graph-up fs-3 text-primary"></i>
+                                    <h6 class="fw-bold text-dark mt-2 mb-1">Plotting</h6>
+                                    <p class="text-muted small mb-0">Steps 11-13</p>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md">
+                            <a href="tutorial.html#download" class="text-decoration-none">
+                                <div class="border rounded-3 p-3 h-100 text-center">
+                                    <i class="bi bi-download fs-3 text-primary"></i>
+                                    <h6 class="fw-bold text-dark mt-2 mb-1">Download</h6>
+                                    <p class="text-muted small mb-0">Steps 14-15</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+                    <figure class="mb-0" id="figure-t1">
+                        <a href="img/overview_flowchart.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                            <img src="img/overview_flowchart.png" class="img-fluid border rounded-3 bg-white w-100 mx-auto d-block" alt="Overview of the SISAL Web Submit process">
+                        </a>
+                        <figcaption class="text-muted small mt-2 text-center">
+                            <em><strong>Figure T1.</strong> 
+                                Overview of the submission process: Upload, Validation, Plotting and Download.
+                                Green arrows mark the way forward, red arrows the paths back to re-upload.</em>
+                        </figcaption>
+                    </figure>
+
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- Phase 1: Preparation                                         -->
+            <!-- ============================================================ -->
+            <div class="card shadow-sm border-0 rounded-3 mb-5" id="preparation">
+                <div class="card-header bg-primary text-white fw-bold d-flex align-items-center py-3 rounded-top card-toggle collapsed" role="button" tabindex="0"
+                     data-bs-toggle="collapse" data-bs-target="#preparation-body" aria-expanded="false" aria-controls="preparation-body">
+                    <i class="bi bi-file-earmark-excel me-2 fs-5"></i> Phase 1: Preparation
+                    <i class="bi bi-chevron-down ms-auto card-chevron"></i>
+                </div>
+                <div class="card-body collapse p-4 p-md-5" id="preparation-body">
+
+                    <!-- Step 1 -->
+                    <div class="tutorial-step mb-5" id="step-1">
+                        <div class="d-flex align-items-start mb-3">
+                            <h5 class="mb-0 border-bottom pb-2 flex-grow-1 d-flex align-items-center">
+                                <span class="step-number me-2">1</span>Download the Excel template
+                            </h5>
+                            <a href="https://github.com/SISALdb/submission_v15" target="_blank" class="btn btn-outline-dark btn-sm fw-bold ms-3 align-self-start">
+                                <i class="bi bi-github me-1"></i> Download Template
+                            </a>
+                        </div>
+                        <p class="text-muted text-justify">
+                            The latest version of the submission template is always available in the official SISAL GitHub repository. 
+                            To download it, click on the appropriate <code>.xlsx</code> file from the repository list 
+                            (e.g., <code>SISAL_workbook_v15_template.xlsx</code>), and then click the "Download raw file" 
+                            icon located in the top right corner of the file view (<a href="tutorial.html#figure-t2" class="text-decoration-none">Figure T2</a>).
+                        </p>
+                        <figure class="mb-0" id="figure-t2">
+                            <a href="img/step01_github_template.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                <img src="img/step01_github_template.png" class="img-fluid border rounded-3 bg-white w-75 mx-auto d-block" alt="Downloading the latest Excel template from GitHub">
+                            </a>
+                            <figcaption class="text-muted small mt-2 text-center">
+                                <em><strong>Figure T2.</strong> Downloading the latest Excel template from GitHub.</em>
+                            </figcaption>
+                        </figure>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="tutorial-step" id="step-2">
+                        <h5 class="mb-3 border-bottom pb-2 d-flex align-items-center">
+                            <span class="step-number me-2">2</span>Fill in the workbook
+                        </h5>
+                        <p class="text-muted text-justify">
+                            All your data must be entered directly into the designated sheets of the downloaded template (<a href="tutorial.html#figure-t3" class="text-decoration-none">Figure T3</a>). Please read and 
+                            carefully follow the detailed guidelines provided in the "INSTRUCTIONS" tab of the workbook before you begin. 
+                            It is strictly required that you do not alter the template's structure, as the automated quality control relies on 
+                            this exact unified schema to process your submission successfully.
+                        </p>
+                        <figure class="mb-0" id="figure-t3">
+                            <a href="img/step02_filling_workbook.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                <img src="img/step02_filling_workbook.png" class="img-fluid border rounded-3 bg-white w-75 mx-auto d-block" alt="The SISAL template while being filled in">
+                            </a>
+                            <figcaption class="text-muted small mt-2 text-center">
+                                <em><strong>Figure T3.</strong> The SISAL template while being filled in.</em>
+                            </figcaption>
+                        </figure>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- Phase 2: Upload                                              -->
+            <!-- ============================================================ -->
+            <div class="card shadow-sm border-0 rounded-3 mb-5" id="upload">
+                <div class="card-header bg-primary text-white fw-bold d-flex align-items-center py-3 rounded-top card-toggle collapsed" role="button" tabindex="0"
+                     data-bs-toggle="collapse" data-bs-target="#upload-body" aria-expanded="false" aria-controls="upload-body">
+                    <i class="bi bi-cloud-upload me-2 fs-5"></i> Phase 2: Upload
+                    <i class="bi bi-chevron-down ms-auto card-chevron"></i>
+                </div>
+                <div class="card-body collapse p-4 p-md-5" id="upload-body">
+
+                    <!-- Step 3 -->
+                    <div class="tutorial-step mb-5" id="step-3">
+                        <div class="d-flex align-items-start mb-3">
+                            <h5 class="mb-0 border-bottom pb-2 flex-grow-1 d-flex align-items-center">
+                                <span class="step-number me-2">3</span>Open the upload page
+                            </h5>
+                            <a href="autoqc_proxy.html" target="_blank" class="btn btn-primary btn-sm fw-bold ms-3 align-self-start">
+                                <i class="bi bi-box-arrow-up-right me-1"></i> Open Upload Page
+                            </a>
+                        </div>
+                        <p class="text-muted text-justify">
+                            To begin the online quality control process, navigate to the upload page by clicking the button above or entering the URL 
+                            into your browser. You will see the initial interface (<a href="tutorial.html#figure-t4" class="text-decoration-none">Figure T4</a>) featuring a four-step progress tracker indicating that you are currently 
+                            in the <strong>Upload</strong> phase.
+                        </p>
+                        <figure class="mb-0" id="figure-t4">
+                            <a href="img/step03_upload_page.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                <img src="img/step03_upload_page.png" class="img-fluid border rounded-3 bg-white w-75 mx-auto d-block" alt="The upload page of SISAL Web Submit">
+                            </a>
+                            <figcaption class="text-muted small mt-2 text-center">
+                                <em><strong>Figure T4.</strong> The initial upload page of SISAL Web Submit.</em>
+                            </figcaption>
+                        </figure>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="tutorial-step mb-5" id="step-4">
+                        <h5 class="mb-3 border-bottom pb-2 d-flex align-items-center">
+                            <span class="step-number me-2">4</span>Resume a previous session or start a new one
+                        </h5>
+                        <p class="text-muted text-justify">
+                            The application utilizes browser cookies to track returning users and isolate their sessions. If a previously saved session 
+                            is found on the server, a dialog box will automatically appear asking whether you wish to continue the saved session or discard it (<a href="tutorial.html#figure-t5" class="text-decoration-none">Figure T5</a>).
+                        </p>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <h6 class="fw-bold text-primary"><i class="bi bi-arrow-repeat me-2"></i>Resume the previous session</h6>
+                                    <p class="text-muted small mb-0">
+                                        Choose the <strong>Continue</strong> button to pick up the validation pipeline from your last checkpoint without having 
+                                        to re-upload files or re-verify the CAPTCHA.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <h6 class="fw-bold text-primary"><i class="bi bi-plus-circle me-2"></i>Start a new upload</h6>
+                                    <p class="text-muted small mb-0">
+                                        Choose the <strong>Discard</strong> button if you have a new or updated workbook and wish to start a completely new 
+                                        submission cycle.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <figure class="mb-0" id="figure-t5">
+                            <a href="img/step04_resume_or_new.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                <img src="img/step04_resume_or_new.png" class="img-fluid border rounded-3 bg-white w-75 mx-auto d-block" alt="Prompt to resume or discard session">
+                            </a>
+                            <figcaption class="text-muted small mt-2 text-center">
+                                <em><strong>Figure T5.</strong> The modal prompt allowing users to resume a saved session or start a new upload.</em>
+                            </figcaption>
+                        </figure>
+                    </div>
+
+                    <!-- Step 5 -->
+                    <div class="tutorial-step mb-5" id="step-5">
+                        <h5 class="mb-3 border-bottom pb-2 d-flex align-items-center">
+                            <span class="step-number me-2">5</span>Starting a new upload
+                        </h5>
+                        <p class="text-muted text-justify mb-0">
+                            The rest of this tutorial follows the standard "new upload" path, as it is the most common scenario. If you choose to resume a 
+                            session, the process simply skips the upload step and automatically jumps forward to your last active phase.
+                        </p>
+                    </div>
+
+                    <!-- Step 6 -->
+                    <div class="tutorial-step mb-5" id="step-6">
+                        <h5 class="mb-3 border-bottom pb-2 d-flex align-items-center">
+                            <span class="step-number me-2">6</span>Verify the CAPTCHA and select the workbook
+                        </h5>
+                        <p class="text-muted text-justify">
+                            First, you must verify that you are human using the integrated Cloudflare Turnstile CAPTCHA; an upload attempted without it is blocked (<a href="tutorial.html#figure-t6" class="text-decoration-none">Figure T6</a>). After successful verification, use the 
+                            file input field to select your completed workbook. The system strictly enforces upload limits for security (<a href="tutorial.html#table-t1" class="text-decoration-none">Table T1</a>): only standard 
+                            <strong>Excel</strong> files up to a maximum of <strong>10 MB</strong> are allowed.
+                        </p>
+                        <div class="alert alert-info small d-flex align-items-start mb-3" role="alert">
+                            <i class="bi bi-lightbulb-fill me-2 mt-1"></i>
+                            <div>
+                                <strong>Tip:</strong>
+                                It is mandatory to completely close the workbook in your local Excel application before uploading to ensure no background 
+                                processes lock the file.
+                            </div>
+                        </div>
+                        <div class="table-responsive mb-2" id="table-t1">
+                            <table class="table table-sm table-bordered align-middle small mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Requirement</th>
+                                        <th>Limit</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-muted">
+                                    <tr>
+                                        <td class="fw-bold">File type</td>
+                                        <td><code>.xlsx</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Maximum file size</td>
+                                        <td>10 MB</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Template version</td>
+                                        <td>v15</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-muted small mb-4 text-center"><em><strong>Table T1.</strong> Upload requirements.</em></p>
+                        <figure class="mb-0" id="figure-t6">
+                            <a href="img/step06_captcha_and_file.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                <img src="img/step06_captcha_and_file.png" class="img-fluid border rounded-3 bg-white w-75 mx-auto d-block" alt="Missing CAPTCHA error during file upload">
+                            </a>
+                            <figcaption class="text-muted small mt-2 text-center">
+                                <em><strong>Figure T6.</strong> An upload blocked by the system due to a missing CAPTCHA verification.</em>
+                            </figcaption>
+                        </figure>
+                    </div>
+
+                    <!-- Step 7 -->
+                    <div class="tutorial-step" id="step-7">
+                        <h5 class="mb-3 border-bottom pb-2 d-flex align-items-center">
+                            <span class="step-number me-2">7</span>Click Upload
+                        </h5>
+                        <p class="text-muted text-justify">
+                            Once your file is selected and the CAPTCHA is verified, click the <strong>Upload file</strong> button to submit. The application immediately 
+                            performs an in-memory structural pre-check to validate the file type and size before saving anything to the server. If your selected 
+                            file exceeds the strict size limit, the pipeline will halt and display an error message (<a href="tutorial.html#figure-t7" class="text-decoration-none">Figure T7</a>). If all pre-checks pass successfully, the 
+                            pipeline automatically advances to the <strong>Validation</strong> phase.
+                        </p>
+                        <figure class="mb-0" id="figure-t7">
+                            <a href="img/step07_file_limit.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                <img src="img/step07_file_limit.png" class="img-fluid border rounded-3 bg-white w-75 mx-auto d-block" alt="File size limit error message">
+                            </a>
+                            <figcaption class="text-muted small mt-2 text-center">
+                                <em><strong>Figure T7.</strong> The upload process stopped by the in-memory check because the file exceeds the 10 MB limit.</em>
+                            </figcaption>
+                        </figure>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- Phase 3: Validation                                          -->
+            <!-- ============================================================ -->
+            <div class="card shadow-sm border-0 rounded-3 mb-5" id="validation">
+                <div class="card-header bg-primary text-white fw-bold d-flex align-items-center py-3 rounded-top card-toggle collapsed" role="button" tabindex="0"
+                     data-bs-toggle="collapse" data-bs-target="#validation-body" aria-expanded="false" aria-controls="validation-body">
+                    <i class="bi bi-clipboard2-check me-2 fs-5"></i> Phase 3: Validation
+                    <i class="bi bi-chevron-down ms-auto card-chevron"></i>
+                </div>
+                <div class="card-body collapse p-4 p-md-5" id="validation-body">
+
+                    <!-- Step 8 -->
+                    <div class="tutorial-step mb-5" id="step-8">
+                        <h5 class="mb-3 border-bottom pb-2 d-flex align-items-center">
+                            <span class="step-number me-2">8</span>Wait for the validation
+                        </h5>
+                        <p class="text-muted text-justify">
+                            Once the upload completes, the automated quality control begins. The system runs the Python script <code>wb_check_v15.py</code> as a 
+                            background process to perform comprehensive workbook quality and U-Th credibility checks. The execution progress is displayed live on 
+                            your screen via a progress bar and a detailed status window indicating the current validation step (<a href="tutorial.html#figure-t8" class="text-decoration-none">Figure T8</a>). When the analysis finishes, a 
+                            validation report is generated (<a href="tutorial.html#figure-t9" class="text-decoration-none">Figure T9</a>), displaying the diagnostic results grouped into separate tables based on their category.
+                        </p>
+                        <figure class="mb-4" id="figure-t8">
+                            <a href="img/step08_validation_progress.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                <img src="img/step08_validation_progress.png" class="img-fluid border rounded-3 bg-white w-75 mx-auto d-block" alt="Live progress of the validation pipeline showing Map Generation at 80%">
+                            </a>
+                            <figcaption class="text-muted small mt-2 text-center">
+                                <em><strong>Figure T8.</strong> Live progress of the validation.</em>
+                            </figcaption>
+                        </figure>
+                        <figure class="mb-0" id="figure-t9">
+                            <a href="img/step08_validation_report.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                <img src="img/step08_validation_report.png" class="img-fluid border rounded-3 bg-white w-75 mx-auto d-block" alt="Validation report with tables for Informative, Warning, and Error messages">
+                            </a>
+                            <figcaption class="text-muted small mt-2 text-center">
+                                <em><strong>Figure T9.</strong> Validation report with one table per message category.</em>
+                            </figcaption>
+                        </figure>
+                    </div>
+
+                    <!-- Step 9 -->
+                    <div class="tutorial-step mb-5" id="step-9">
+                        <h5 class="mb-3 border-bottom pb-2 d-flex align-items-center">
+                            <span class="step-number me-2">9</span>Understand the message categories
+                        </h5>
+                        <p class="text-muted text-justify">
+                            The diagnostic messages generated by the validation script are classified into four distinct severity levels (<a href="tutorial.html#table-t2" class="text-decoration-none">Table T2</a>). It is important to 
+                            understand how each category impacts your submission and whether they block the workflow. Furthermore, legacy messages were refined 
+                            to include exact script and workbook locations to assist in precise debugging. The columns of the report tables are described in <a href="tutorial.html#table-t3" class="text-decoration-none">Table T3</a> and illustrated in <a href="tutorial.html#figure-t10" class="text-decoration-none">Figure T10</a>.
+                        </p>
+
+                        <h6 class="fw-bold text-dark mb-2">Message categories</h6>
+                        <div class="table-responsive mb-2" id="table-t2">
+                            <table class="table table-sm table-bordered align-middle small mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Meaning</th>
+                                        <th>Can the pipeline continue?</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-muted">
+                                    <tr>
+                                        <td class="fw-bold"><span class="badge bg-info text-dark">Informative</span></td>
+                                        <td>General diagnostic information or successful check notifications.</td>
+                                        <td>Yes</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold"><span class="badge bg-warning text-dark">Warning</span></td>
+                                        <td>Non-critical issues that should ideally be addressed, but do not strictly halt the submission.</td>
+                                        <td>Yes</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold"><span class="badge bg-danger">Error</span></td>
+                                        <td>Critical data or formatting issues that violate the SISAL schema.</td>
+                                        <td>No</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold"><span class="badge bg-dark">Fatal error</span></td>
+                                        <td>Severe structural problems preventing the script from running.</td>
+                                        <td>No</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-muted small mb-4 text-center"><em><strong>Table T2.</strong> Message categories of the validation report.</em></p>
+
+                        <h6 class="fw-bold text-dark mb-2">Columns of the report tables</h6>
+                        <div class="table-responsive mb-2" id="table-t3">
+                            <table class="table table-sm table-bordered align-middle small mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Column</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-muted">
+                                    <tr>
+                                        <td class="fw-bold">Priority</td>
+                                        <td>The severity classification of the message.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Description</td>
+                                        <td>A detailed explanation of the issue found in the data.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Script location</td>
+                                        <td>The exact function and line number in the Python script where the check occurred.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Workbook location</td>
+                                        <td>The specific Excel sheet where the problem is located.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-muted small mb-4 text-center"><em><strong>Table T3.</strong> Columns of the validation report tables.</em></p>
+
+                        <figure class="mb-0" id="figure-t10">
+                            <a href="img/step09_report_table_columns.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                <img src="img/step09_report_table_columns.png" class="img-fluid border rounded-3 bg-white w-75 mx-auto d-block" alt="Anatomy of a report table showing Priority, Description, Script location, and Workbook location columns">
+                            </a>
+                            <figcaption class="text-muted small mt-2 text-center">
+                                <em><strong>Figure T10.</strong> Anatomy of a validation report table.</em>
+                            </figcaption>
+                        </figure>
+                    </div>
+
+                    <!-- Step 10 -->
+                    <div class="tutorial-step" id="step-10">
+                        <h5 class="mb-3 border-bottom pb-2 d-flex align-items-center">
+                            <span class="step-number me-2">10</span>Fix the issues and re-upload, or continue
+                        </h5>
+                        <p class="text-muted text-justify">
+                            Carefully review the generated validation report. If the system detects any <span class="badge bg-danger">Error</span> or 
+                            <span class="badge bg-dark">Fatal error</span> messages (see <a href="tutorial.html#table-t2" class="text-decoration-none">Table T2</a>), the validation is considered failed. In this case, the pipeline halts 
+                            completely, and you are blocked from proceeding to the plotting phase (<a href="tutorial.html#figure-t11" class="text-decoration-none">Figure T11</a>). You must correct the identified issues in your local 
+                            Excel workbook and re-upload the file to run the validation again. If your workbook only contains 
+                            <span class="badge bg-info text-dark">Informative</span> messages or non-critical <span class="badge bg-warning text-dark">Warning</span> 
+                            messages, the validation passes, and you can click the <strong>Next</strong> button to continue to the plotting phase.
+                        </p>
+                        <div class="alert alert-warning small d-flex align-items-start mb-3" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2 mt-1"></i>
+                            <div>
+                                <strong>Note:</strong>
+                                If errors are present, the <strong>Next</strong> button becomes inactive and prevents you from moving forward. Every correction 
+                                requires a full re-upload of the workbook.
+                            </div>
+                        </div>
+                        <figure class="mb-0" id="figure-t11">
+                            <a href="img/step10_continue_button.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                <img src="img/step10_continue_button.png" class="img-fluid border rounded-3 bg-white w-75 mx-auto d-block" alt="Validation failed screen with an inactive Next button">
+                            </a>
+                            <figcaption class="text-muted small mt-2 text-center">
+                                <em><strong>Figure T11.</strong> A failed validation screen blocking the pipeline due to present errors.</em>
+                            </figcaption>
+                        </figure>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- Phase 4: Plotting                                            -->
+            <!-- ============================================================ -->
+            <div class="card shadow-sm border-0 rounded-3 mb-5" id="plotting">
+                <div class="card-header bg-primary text-white fw-bold d-flex align-items-center py-3 rounded-top card-toggle collapsed" role="button" tabindex="0"
+                     data-bs-toggle="collapse" data-bs-target="#plotting-body" aria-expanded="false" aria-controls="plotting-body">
+                    <i class="bi bi-graph-up me-2 fs-5"></i> Phase 4: Plotting
+                    <i class="bi bi-chevron-down ms-auto card-chevron"></i>
+                </div>
+                <div class="card-body collapse p-4 p-md-5" id="plotting-body">
+
+                    <!-- Step 11 -->
+                    <div class="tutorial-step mb-5" id="step-11">
+                        <h5 class="mb-3 border-bottom pb-2 d-flex align-items-center">
+                            <span class="step-number me-2">11</span>Wait for the plot generation
+                        </h5>
+                        <p class="text-muted text-justify">
+                            The application automatically executes an R script in the background to generate age-model and proxy time-series plots based on 
+                            your validated data. The progress is shown live on the interface (<a href="tutorial.html#figure-t12" class="text-decoration-none">Figure T12</a>), detailing steps like "Initialization", "Data Preparation", and 
+                            "Plot Generation". Since plots are generated separately for every entity in the workbook, this process can take a while for 
+                            larger submissions. 
+                        </p>
+                        <figure class="mb-0" id="figure-t12">
+                            <a href="img/step11_plot_progress.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                <img src="img/step11_plot_progress.png" class="img-fluid border rounded-3 bg-white w-75 mx-auto d-block" alt="Live progress of the plot generation showing initialization and per-entity processing">
+                            </a>
+                            <figcaption class="text-muted small mt-2 text-center">
+                                <em><strong>Figure T12.</strong> Plot generation in progress showing per-entity status.</em>
+                            </figcaption>
+                        </figure>
+                    </div>
+
+                    <!-- Step 12 -->
+                    <div class="tutorial-step mb-5" id="step-12">
+                        <h5 class="mb-3 border-bottom pb-2 d-flex align-items-center">
+                            <span class="step-number me-2">12</span>Inspect the plots
+                        </h5>
+                        <p class="text-muted text-justify">
+                            When the generation finishes, a success message displays the total number of images created. The plots are grouped under expandable 
+                            entity headers (<a href="tutorial.html#figure-t13" class="text-decoration-none">Figure T13</a>). Review all of them carefully, as this visual inspection is your last chance to spot data-entry mistakes before the 
+                            dataset reaches the SISAL data stewards. The plot types generated for each entity and the points to check on them are summarised in <a href="tutorial.html#table-t4" class="text-decoration-none">Table T4</a>; examples are shown in <a href="tutorial.html#figure-t14" class="text-decoration-none">Figure T14</a> (age model), <a href="tutorial.html#figure-t15" class="text-decoration-none">Figure T15</a> (hiatus), <a href="tutorial.html#figure-t16" class="text-decoration-none">Figure T16</a> (d18O) and <a href="tutorial.html#figure-t17" class="text-decoration-none">Figure T17</a> (d13C).
+                        </p>
+                        <figure class="mb-4" id="figure-t13">
+                            <a href="img/step12_plot_gallery.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                <img src="img/step12_plot_gallery.png" class="img-fluid border rounded-3 bg-white w-75 mx-auto d-block" alt="Plot gallery grouped by entity showing Age Model and Interpolated Age Differences">
+                            </a>
+                            <figcaption class="text-muted small mt-2 text-center">
+                                <em><strong>Figure T13.</strong> Plots grouped by entity in the gallery view.</em>
+                            </figcaption>
+                        </figure>
+
+                        <h6 class="fw-bold text-dark mb-2">Generated plots and what to check</h6>
+                        <div class="table-responsive mb-2" id="table-t4">
+                            <table class="table table-sm table-bordered align-middle small mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Plot</th>
+                                        <th>What it shows</th>
+                                        <th>What to check</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-muted">
+                                    <tr>
+                                        <td class="fw-bold">Age model</td>
+                                        <td>Plots "Distance from top (mm)" against "Age (ka b2k)".</td>
+                                        <td>Verify the position of dating points, uncertainty bands, and the overall age-depth curve.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Hiatuses</td>
+                                        <td>Shows a red dotted line labeled "hiatuses in workbook" across the age model graph.</td>
+                                        <td>Ensure the hiatus appears at the correct depth as intended in your uploaded data.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Proxy time series</td>
+                                        <td>Displays proxy values such as d18O (permil) or Sr/Ca (mmol/mol) against time (Age).</td>
+                                        <td>Check for correct units, proper axis scaling, and potential data outliers.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-muted small mb-4 text-center"><em><strong>Table T4.</strong> Plot types generated for each entity.</em></p>
+
+                        <div class="row justify-content-center g-3 mb-4">
+                            <div class="col-md-6">
+                                <figure class="mb-0" id="figure-t14">
+                                    <a href="img/step12_plot_age_model.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                        <img src="img/step12_plot_age_model.png" class="img-fluid border rounded-3 bg-white w-100 mx-auto d-block" alt="Age model plot showing distance from top versus age">
+                                    </a>
+                                    <figcaption class="text-muted small mt-2 text-center">
+                                        <em><strong>Figure T14.</strong> Age model plot showing dating points and age-depth curve.</em>
+                                    </figcaption>
+                                </figure>
+                            </div>
+                            <div class="col-md-6">
+                                <figure class="mb-0" id="figure-t15">
+                                    <a href="img/step12_plot_hiatus.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                        <img src="img/step12_plot_hiatus.png" class="img-fluid border rounded-3 bg-white w-100 mx-auto d-block" alt="Age model plot with a red dotted line indicating a hiatus">
+                                    </a>
+                                    <figcaption class="text-muted small mt-2 text-center">
+                                        <em><strong>Figure T15.</strong> Age model plot with a marked hiatus.</em>
+                                    </figcaption>
+                                </figure>
+                            </div>
+                            <div class="col-md-6">
+                                <figure class="mb-0" id="figure-t16">
+                                    <a href="img/step12_plot_proxy_O.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                        <img src="img/step12_plot_proxy_O.png" class="img-fluid border rounded-3 bg-white w-100 mx-auto d-block" alt="Proxy time series plot showing d18O versus age">
+                                    </a>
+                                    <figcaption class="text-muted small mt-2 text-center">
+                                        <em><strong>Figure T16.</strong> Proxy time-series plot for d18O.</em>
+                                    </figcaption>
+                                </figure>
+                            </div>
+                            <div class="col-md-6">
+                                <figure class="mb-0" id="figure-t17">
+                                    <a href="img/step12_plot_proxy_C.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                        <img src="img/step12_plot_proxy_C.png" class="img-fluid border rounded-3 bg-white w-100 mx-auto d-block" alt="Proxy time series plot showing d13C versus age">
+                                    </a>
+                                    <figcaption class="text-muted small mt-2 text-center">
+                                        <em><strong>Figure T17.</strong> Proxy time-series plot for d13C.</em>
+                                    </figcaption>
+                                </figure>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info small d-flex align-items-start mb-3" role="alert">
+                            <i class="bi bi-lightbulb-fill me-2 mt-1"></i>
+                            <div>
+                                <strong>Tip:</strong>
+                                Clicking on any plot in the web gallery will automatically open it in a 
+                                new browser tab, allowing you to examine the image in full size (<a href="tutorial.html#figure-t18" class="text-decoration-none">Figure T18</a>).
+                            </div>
+                        </div>
+                        <figure class="mb-0" id="figure-t18">
+                            <a href="img/step12_plot_fullview.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                <img src="img/step12_plot_fullview.png" class="img-fluid border rounded-3 bg-white w-75 mx-auto d-block" alt="Full size view of a Sr/Ca proxy plot in a new browser tab">
+                            </a>
+                            <figcaption class="text-muted small mt-2 text-center">
+                                <em><strong>Figure T18.</strong> Opening a high-resolution plot in full browser view.</em>
+                            </figcaption>
+                        </figure>
+                    </div>
+
+                    <!-- Step 13 -->
+                    <div class="tutorial-step" id="step-13">
+                        <h5 class="mb-3 border-bottom pb-2 d-flex align-items-center">
+                            <span class="step-number me-2">13</span>Accept the plots and continue
+                        </h5>
+                        <p class="text-muted text-justify">
+                            If the visualizations are satisfactory and accurately represent your data, click the <strong>Next</strong> button at the bottom 
+                            of the page to proceed to the download phase (<a href="tutorial.html#figure-t19" class="text-decoration-none">Figure T19</a>). If you discover any anomalies or mistakes during the visual inspection, click the 
+                            <strong>Back</strong> button to discard the progress, correct the data in your Excel workbook, and go back to re-upload it.
+                        </p>
+                        <figure class="mb-0" id="figure-t19">
+                            <a href="img/step13_accept_plots.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                <img src="img/step13_accept_plots.png" class="img-fluid border rounded-3 bg-white w-75 mx-auto d-block" alt="Bottom of the plotting page showing Back and Next buttons">
+                            </a>
+                            <figcaption class="text-muted small mt-2 text-center">
+                                <em><strong>Figure T19.</strong> Accepting the plot results to proceed, or going back to re-upload.</em>
+                            </figcaption>
+                        </figure>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- Phase 5: Download                                            -->
+            <!-- ============================================================ -->
+            <div class="card shadow-sm border-0 rounded-3 mb-4" id="download">
+                <div class="card-header bg-primary text-white fw-bold d-flex align-items-center py-3 rounded-top card-toggle collapsed" role="button" tabindex="0"
+                     data-bs-toggle="collapse" data-bs-target="#download-body" aria-expanded="false" aria-controls="download-body">
+                    <i class="bi bi-download me-2 fs-5"></i> Phase 5: Download
+                    <i class="bi bi-chevron-down ms-auto card-chevron"></i>
+                </div>
+                <div class="card-body collapse p-4 p-md-5" id="download-body">
+
+                    <!-- Step 14 -->
+                    <div class="tutorial-step mb-5" id="step-14">
+                        <h5 class="mb-3 border-bottom pb-2 d-flex align-items-center">
+                            <span class="step-number me-2">14</span>Download the results package
+                        </h5>
+                        <p class="text-muted text-justify">
+                            To finalize the process, click the green <strong>Download results (.zip)</strong> button to retrieve your archive (<a href="tutorial.html#figure-t20" class="text-decoration-none">Figure T20</a>). This package 
+                            contains all the necessary files and is exactly what you need to forward to the SISAL data stewards to submit your data. The contents of the archive are listed below and shown in <a href="tutorial.html#figure-t21" class="text-decoration-none">Figure T21</a>.
+                        </p>
+
+                        <h6 class="fw-bold text-dark mb-2">Contents of the .zip archive</h6>
+                        <ul class="text-muted mb-4">
+                            <li class="mb-1"><strong class="text-dark">QC-passed workbook</strong> (<code>.xlsx</code>): 
+                                The validated Excel file containing your data.
+                            </li>
+                            <li class="mb-1"><strong class="text-dark">Plots PDF</strong> (<code>.pdf</code>): 
+                                A consolidated document containing the generated age models and proxy plots.
+                            </li>
+                            <li class="mb-1"><strong class="text-dark">Site map</strong> (<code>.png</code>): 
+                                An image file showing the geographical location of the site.
+                            </li>
+                            <li class="mb-1"><strong class="text-dark">Diagnostic report</strong> (<code>.txt</code>): 
+                                A text file logging the validation results.
+                            </li>
+                        </ul>
+
+                        <figure class="mb-4" id="figure-t20">
+                            <a href="img/step14_download_page.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                <img src="img/step14_download_page.png" class="img-fluid border rounded-3 bg-white w-75 mx-auto d-block" alt="The Download page showing a successful validation message and the download button">
+                            </a>
+                            <figcaption class="text-muted small mt-2 text-center">
+                                <em><strong>Figure T20.</strong> The Download page with the results archive ready.</em>
+                            </figcaption>
+                        </figure>
+                        <figure class="mb-0" id="figure-t21">
+                            <a href="img/step14_zip_contents.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                <img src="img/step14_zip_contents.png" class="img-fluid border rounded-3 bg-white w-75 mx-auto d-block" alt="Diagram showing the contents of the downloaded SISAL_QC_Results.zip archive">
+                            </a>
+                            <figcaption class="text-muted small mt-2 text-center">
+                                <em><strong>Figure T21.</strong> Contents of the downloaded results archive.</em>
+                            </figcaption>
+                        </figure>
+                    </div>
+
+                    <!-- Step 15 -->
+                    <div class="tutorial-step" id="step-15">
+                        <h5 class="mb-3 border-bottom pb-2 d-flex align-items-center">
+                            <span class="step-number me-2">15</span>Save the session or discard it
+                        </h5>
+                        <p class="text-muted text-justify">
+                            On the <strong>Download page</strong>, you must decide how to manage your session data on the server (<a href="tutorial.html#figure-t22" class="text-decoration-none">Figure T22</a>). 
+                            You can either keep your files available for a limited time or securely delete them immediately.
+                        </p>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <h6 class="fw-bold text-primary"><i class="bi bi-save me-2"></i>Save the session</h6>
+                                    <p class="text-muted small mb-0">
+                                        Click the <strong>Save (7 days)</strong> button to keep your session folder on the server for an additional 7 days. 
+                                        A reference is stored in your browser's cookies, allowing you to return and download the files again if needed 
+                                        without restarting the process.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <h6 class="fw-bold text-danger"><i class="bi bi-trash me-2"></i>Discard the session</h6>
+                                    <p class="text-muted small mb-0">
+                                        Click the <strong>Discard</strong> button to immediately and permanently delete all your uploaded and generated 
+                                        files from the server. This action cannot be undone.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <figure class="mb-0" id="figure-t22">
+                            <a href="img/step15_save_or_discard.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                                <img src="img/step15_save_or_discard.png" class="img-fluid border rounded-3 bg-white w-100 mx-auto d-block" alt="Save session section showing the Discard and Save (7 days) buttons">
+                            </a>
+                            <figcaption class="text-muted small mt-2 text-center">
+                                <em><strong>Figure T22.</strong> Saving or discarding the session data from the server.</em>
+                            </figcaption>
+                        </figure>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<footer class="mt-auto py-2 bg-dark text-light">
+    <div class="container d-flex justify-content-between align-items-center small">
+
+        <div class="text-start" style="flex: 1;">
+            <a href="about.html" class="btn btn-outline-light btn-sm">About this project</a>
+        </div>
+
+        <div class="text-center" style="flex: 1;">
+            &copy; 2026 SISAL Web Submit<br>
+            <span class="text-white-50">For v15.0 excel workbooks</span>
+        </div>
+
+        <div class="text-end" style="flex: 1;">
+            Developed by: <strong>Gergő Rabi-Nagy</strong>
+        </div>
+
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/shared.js?v={{ app_version }}"></script>
+<script src="js/tutorial.js?v={{ app_version }}"></script>
+</body>
+</html>
