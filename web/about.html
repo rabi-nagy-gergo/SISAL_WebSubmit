@@ -6,158 +6,675 @@
     <base href="{{ root_path }}/">
     <title>About - SISAL Web Submit</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" >
+    <link href="css/about.css?v={{ app_version }}" rel="stylesheet">
 </head>
 <body class="bg-light d-flex flex-column min-vh-100">
 
 <div class="container py-4 py-md-5 flex-grow-1">
     <div class="row justify-content-center">
         <div class="col-lg-10">
-            
+
             <div class="text-center mb-4">
-                <h2 class="fw-bold">About the Project</h2>
+                <h2 class="fw-bold mb-1">About the Project</h2>
+                <h5 class="text-muted fw-normal">Online Supplement Material</h5>
             </div>
 
-            <div class="card shadow-sm border-0 rounded-3 mb-5">
-                <div class="card-header bg-primary text-white fw-bold d-flex align-items-center py-3 rounded-top">
-                    <i class="bi bi-file-earmark-code-fill me-2 fs-5"></i> Project Information
+            <!-- ============================================================ -->
+            <!-- Overview                                                     -->
+            <!-- ============================================================ -->
+            <div class="card shadow-sm border-0 rounded-3 mb-5" id="overview">
+                <div class="card-header bg-primary text-white fw-bold d-flex align-items-center py-3 rounded-top card-toggle" role="button" tabindex="0"
+                     data-bs-toggle="collapse" data-bs-target="#overview-body" aria-expanded="false" aria-controls="overview-body">
+                    <i class="bi bi-signpost-split-fill me-2 fs-5"></i> Overview
+                    <i class="bi bi-chevron-down ms-auto card-chevron"></i>
                 </div>
-                
-                <div class="card-body p-4 p-md-5">
-                    
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <h4 class="text-primary fw-bold mb-0">SISAL Web Submit</h4>
-                        <a href="https://github.com/rabi-nagy-gergo/SISAL_WebSubmit" target="_blank" class="btn btn-outline-dark btn-sm fw-bold">
-                            <i class="bi bi-github me-1"></i> Project Repository
-                        </a>
-                    </div>
-                    
-                    <p class="text-muted mb-4">
-                        The SISAL Web Submit project transforms an existing local data submission workflow into an interactive web application designed for uploading, 
-                        auditing, and validating speleothem data. The SISAL speleothem database is one of the largest databases of its kind in the world. 
-                        This application automates the validation process by providing a user-friendly interface connected to a stateless, file-system-based FastAPI backend.
+                <div class="card-body collapse show p-4 p-md-5" id="overview-body">
+
+                    <p class="text-muted text-justify mb-4">
+                        This page provides comprehensive background information on the SISAL database and the development of the <strong>SISAL Web Submit</strong> application. It details the scientific context of speleothem data curation, the community-driven living data workflow, the transition from local terminal scripts to a robust web-based architecture, and acknowledges the researchers and developers who made this project possible. Use the links below to quickly navigate to the different sections of this documentation.
                     </p>
-                    
-                    <h5 class="mb-3 border-bottom pb-2">Submission Workflow</h5>
-                    <ul class="text-muted mb-4 list-group list-group-flush border-0">
-                        <li class="list-group-item bg-transparent px-0 border-0 mb-2 d-flex align-items-start">
-                            <i class="bi bi-1-circle-fill text-primary fs-4 me-3" style="line-height: 1;"></i>
-                            <div>
-                                <strong>File Upload:</strong> 
-                                The contributor fills out the provided Excel workbook template with their speleothem sample data 
-                                and uploads it through the web interface.
-                            </div>
-                        </li>
-                        <li class="list-group-item bg-transparent px-0 border-0 mb-2 d-flex align-items-start">
-                            <i class="bi bi-2-circle-fill text-primary fs-4 me-3" style="line-height: 1;"></i>
-                            <div>
-                                <strong>Validation (AutoQC):</strong> 
-                                The FastAPI backend executes a Python QC script (<code>wb_check_v15.py</code>) to validate the workbook's content and structure. 
-                                This script generates a QC log, a regional site map, and a QC-passed copy of the workbook if no structural or logical errors are found.
-                            </div>
-                        </li>
-                        <li class="list-group-item bg-transparent px-0 border-0 mb-2 d-flex align-items-start">
-                            <i class="bi bi-3-circle-fill text-primary fs-4 me-3" style="line-height: 1;"></i>
-                            <div>
-                                <strong>Age-Model & Proxy Plotting:</strong> 
-                                An R plotting script (<code>run_plots.R</code>) is executed to generate a PDF for each entity containing age models, 
-                                potential hiatuses, and proxy time-series plots.
-                            </div>
-                        </li>
-                        <li class="list-group-item bg-transparent px-0 border-0 mb-2 d-flex align-items-start">
-                            <i class="bi bi-4-circle-fill text-primary fs-4 me-3" style="line-height: 1;"></i>
-                            <div>
-                                <strong>Download and Finalization:</strong> 
-                                The contributor can download a <code>.zip</code> archive containing the validated Excel file and the PDF plots. 
-                                The validated data and documentation are then manually forwarded to a SISAL Data Steward.
-                            </div>
-                        </li>
-                    </ul>
 
-                    <h5 class="mb-3 border-bottom pb-2">Architecture & Environment</h5>
-                    <ul class="text-muted mb-4 list-group list-group-flush">
-                        <li class="list-group-item bg-transparent px-0 border-0 py-1">
-                            <i class="bi bi-check2 text-success me-2"></i>
-                            Session management allows users to safely save their progress and resume the upload process within a 1-week window.
-                        </li>
-                        <li class="list-group-item bg-transparent px-0 border-0 py-1">
-                            <i class="bi bi-check2 text-success me-2"></i>
-                            Strict data privacy is enforced by retaining uploaded data for a maximum of 1 week, after which all files are automatically and permanently deleted.
-                        </li>
-                        <li class="list-group-item bg-transparent px-0 border-0 py-1">
-                            <i class="bi bi-check2 text-success me-2"></i>
-                            Full Docker integration ensures smooth development and deployment by containing all necessary 
-                            software packages and dependencies in a single, unified environment.
-                        </li>
-                        <li class="list-group-item bg-transparent px-0 border-0 py-1">
-                            <i class="bi bi-check2 text-success me-2"></i>
-                            The web interface completely eliminates the need for users to manually install and maintain local software packages 
-                            previously required for the data submission workflow.
-                        </li>
-                        <li class="list-group-item bg-transparent px-0 border-0 py-1">
-                            <i class="bi bi-check2 text-success me-2"></i>
-                            The application guarantees compatibility by always supporting and validating the most up-to-date SISAL Excel workbook format.
-                        </li>
-                    </ul>
-
-                    <h5 class="mb-3 border-bottom pb-2">Technology Stack</h5>
-                    <div class="d-flex flex-wrap gap-2 mb-3">
-                        <span class="badge bg-primary p-2 fs-7">Python</span>
-                        <span class="badge bg-success p-2 fs-7">FastAPI</span>
-                        <span class="badge bg-info text-dark p-2 fs-7">R</span>
-                        <span class="badge bg-warning text-dark p-2 fs-7">Vanilla JS & HTML</span>
-                        <span class="badge bg-secondary p-2 fs-7">Bootstrap 5</span>
-                        <span class="badge bg-dark p-2 fs-7">Docker</span>
-                    </div>
-
-                    <ul class="text-muted list-unstyled">
-                        <li class="mb-2"><strong>Data Validation (Python):</strong> Requires 
-                            <code>pandas</code>, <code>numpy</code>, <code>openpyxl</code>, <code>xlrd</code>, 
-                            <code>matplotlib</code>, <code>cartopy</code>, and <code>shapely</code>.
-                        </li>
-                        <li><strong>Plotting (R):</strong> Requires 
-                            <code>openxlsx</code> and <code>ggplot2</code>.
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="card shadow-sm border-0 rounded-3 mb-4" id="aboutme">
-                <div class="card-header bg-primary text-white fw-bold d-flex align-items-center py-3 rounded-top">
-                    <i class="bi bi-person-bounding-box me-2 fs-5"></i> About the Developer
-                </div>
-                <div class="card-body p-4 p-md-5">
-                    
-                    <div class="mb-4">
-                        <h4 class="fw-bold text-dark mb-1">Gergő Rabi-Nagy</h4>
-                        <p class="text-muted mb-2">Software Developer / Full-Stack Engineer</p>
-                        <div class="d-flex gap-3">
-                            <a href="mailto:rabi.nagy.gergo@gmail.com" class="text-decoration-none text-danger small fw-bold">
-                                <i class="bi bi-envelope-fill me-1"></i> Email
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6 col-lg-3">
+                            <a href="about.html#sisal-ecosystem" class="text-decoration-none">
+                                <div class="border rounded-3 p-3 h-100 text-center">
+                                    <i class="bi bi-globe-europe-africa fs-3 text-primary"></i>
+                                    <h6 class="fw-bold text-dark mt-2 mb-1">SISAL Ecosystem</h6>
+                                    <p class="text-muted small mb-0">Living database context</p>
+                                </div>
                             </a>
-                            <a href="https://github.com/rabi-nagy-gergo" target="_blank" class="text-decoration-none text-secondary small fw-bold">
-                                <i class="bi bi-github me-1"></i> GitHub
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <a href="about.html#sisal-web-submit" class="text-decoration-none">
+                                <div class="border rounded-3 p-3 h-100 text-center">
+                                    <i class="bi bi-cloud-upload-fill fs-3 text-primary"></i>
+                                    <h6 class="fw-bold text-dark mt-2 mb-1">Web Submit</h6>
+                                    <p class="text-muted small mb-0">Submission workflow</p>
+                                </div>
                             </a>
-                            <a href="https://www.linkedin.com/in/gergo-rabi-nagy" target="_blank" class="text-decoration-none text-primary small fw-bold">
-                                <i class="bi bi-linkedin me-1"></i> LinkedIn
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <a href="about.html#software-architecture" class="text-decoration-none">
+                                <div class="border rounded-3 p-3 h-100 text-center">
+                                    <i class="bi bi-diagram-3-fill fs-3 text-primary"></i>
+                                    <h6 class="fw-bold text-dark mt-2 mb-1">Architecture</h6>
+                                    <p class="text-muted small mb-0">Tech stack & execution</p>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <a href="about.html#contributors" class="text-decoration-none">
+                                <div class="border rounded-3 p-3 h-100 text-center">
+                                    <i class="bi bi-people-fill fs-3 text-primary"></i>
+                                    <h6 class="fw-bold text-dark mt-2 mb-1">Contributors</h6>
+                                    <p class="text-muted small mb-0">Project members</p>
+                                </div>
                             </a>
                         </div>
                     </div>
 
+                    <div class="card border-primary border-0 bg-primary bg-opacity-10 rounded-3 p-4">
+                        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                            <div>
+                                <h6 class="fw-bold text-primary mb-1 d-flex align-items-center">
+                                    <i class="bi bi-journal-bookmark-fill me-2 fs-5"></i>Step-by-Step Submission Tutorial
+                                </h6>
+                                <p class="text-muted small mb-0 text-justify">
+                                    Are you a first-time data contributor or looking for a detailed guide? Explore our interactive tutorial for comprehensive, 
+                                    step-by-step instructions, practical tips, and visual examples covering the entire submission workflow.
+                                </p>
+                            </div>
+                            <a href="tutorial.html" class="btn btn-primary fw-bold text-nowrap px-4 py-2 align-self-start align-self-md-center">
+                                <i class="bi bi-book-half me-2"></i>Open Tutorial
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- 1. SISAL Ecosystem                                           -->
+            <!-- ============================================================ -->
+            <div class="card shadow-sm border-0 rounded-3 mb-5" id="sisal-ecosystem">
+                <div class="card-header bg-primary text-white fw-bold d-flex align-items-center py-3 rounded-top card-toggle collapsed" role="button" tabindex="0"
+                     data-bs-toggle="collapse" data-bs-target="#sisal-ecosystem-body" aria-expanded="false" aria-controls="sisal-ecosystem-body">
+                    <i class="bi bi-globe-europe-africa me-2 fs-5"></i> SISAL Ecosystem
+                    <i class="bi bi-chevron-down ms-auto card-chevron"></i>
+                </div>
+                <div class="card-body collapse p-4 p-md-5" id="sisal-ecosystem-body">
+
+                    <h5 class="mb-3 border-bottom pb-2">Introduction</h5>
                     <p class="text-muted text-justify">
-                        I am Gergő Rabi-Nagy, a Software Developer with a BSc in Computer Science. I possess solid knowledge in software design, 
-                        developing complex multi-layer applications, and applying object-oriented and functional design patterns. 
-                        I am characterized by a strong algorithmic and problem-solving mindset.
+                        Speleothems (stalagmites, stalactites and flowstones) are calcium carbonate deposits that grow layer by layer in caves
+                        over hundreds to hundreds of thousands of years. They are among the best-dated terrestrial climate archives: radiometric
+                        U-series dating provides precise age control, and the oxygen and carbon isotope composition and trace-element content of
+                        the carbonate record past hydroclimate conditions. Because speleothems are distributed worldwide, they allow regional to
+                        global reconstructions of past changes in atmospheric circulation and hydroclimate and provide a benchmark for climate-model evaluation.
                     </p>
                     <p class="text-muted text-justify">
-                        During the implementation of my projects, I pay special attention to Clean Code principles, the strict server-side protection of business logic, 
-                        and robust, fault-tolerant database operations. My goal is to provide platforms that minimize administrative burdens 
-                        while guaranteeing full transparency and auditability.
+                        The <strong>Speleothem Isotopes Synthesis and AnaLysis (SISAL)</strong> working group was founded in 2017 under the umbrella of 
+                        the Past Global Changes (PAGES) project. The working group aims to provide a comprehensive compilation of speleothem isotope records 
+                        for climate reconstruction and model evaluation. SISAL is an international, community-curated effort: a single relational database, 
+                        a standardised metadata scheme, a common quality-control (QC) procedure and standardised age models make records from many 
+                        laboratories directly comparable and re-usable.
+                    </p>
+                    <p class="text-muted text-justify mb-4">
+                        The most recent release, <strong>SISALv3.1N</strong>, is the first version that is maintained as a living database and
+                        is integrated into the <a href="https://www.neotomadb.org" target="_blank" class="text-decoration-none">Neotoma Paleoecology Database</a>
+                        as a constituent database. It comprises isotope and trace-element data and chronologies from 903 speleothem entities at 365 cave sites. 
+                        The submission workflow documented on this page, and the web application that implements its quality-control step, are part of 
+                        this evolving living-database framework.
                     </p>
 
-                    <div class="text-center mt-5">
-                        <a href="index.html" class="btn btn-outline-primary px-4">Return to Home</a>
+                    <h5 class="mb-3 border-bottom pb-2">Publications</h5>
+                    <p class="text-muted text-justify">
+                        Since 2018, four versions of the speleothem stable-isotope database have been published, each accompanied by a data
+                        description paper (<a href="about.html#table-s1" class="text-decoration-none">Table S1</a>). 
+                        SISALv3.0 additionally introduced speleothem trace-element records and strontium isotopes, 
+                        together with downsampling scripts that bring high-resolution trace-element data onto the isotope depth scale.
+                    </p>
+
+                    <div class="table-responsive mb-2" id="table-s1">
+                        <table class="table table-sm table-bordered align-middle small mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Version</th>
+                                    <th>Year</th>
+                                    <th>Content</th>
+                                    <th>Novelty</th>
+                                    <th>Reference</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-muted">
+                                <tr>
+                                    <td class="fw-bold">v1.0</td>
+                                    <td>2018</td>
+                                    <td>381 speleothem records</td>
+                                    <td>Schema, database</td>
+                                    <td>Atsawawaranunt et al. (2018), <em>Earth Syst. Sci. Data</em>, 10, 1687-1713,
+                                        <a href="https://doi.org/10.5194/essd-10-1687-2018" target="_blank" class="text-decoration-none">doi:10.5194/essd-10-1687-2018</a></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">v1b</td>
+                                    <td>2019</td>
+                                    <td>455 speleothem records</td>
+                                    <td> </td>
+                                    <td>Atsawawaranunt et al. (2019, dataset); figures as reported in Comas-Bru et al. (2020)</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">v2.0</td>
+                                    <td>2020</td>
+                                    <td>691 records (673 δ<sup>18</sup>O, 430 δ<sup>13</sup>C)</td>
+                                    <td>Standardised SISAL age models</td>
+                                    <td>Comas-Bru et al. (2020), <em>Earth Syst. Sci. Data</em>, 12, 2579-2606,
+                                        <a href="https://doi.org/10.5194/essd-12-2579-2020" target="_blank" class="text-decoration-none">doi:10.5194/essd-12-2579-2020</a></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">v3.0</td>
+                                    <td>2024</td>
+                                    <td>892 δ<sup>18</sup>O and 620 δ<sup>13</sup>C records; 95 Mg/Ca, 85 Sr/Ca, 52 Ba/Ca, 25 U/Ca, 29 P/Ca and 14 Sr-isotope records</td>
+                                    <td>Trace elements, downsampling scripts, Sr isotopes</td>
+                                    <td>Kaushal et al. (2024), <em>Earth Syst. Sci. Data</em>, 16, 1933-1963,
+                                        <a href="https://doi.org/10.5194/essd-16-1933-2024" target="_blank" class="text-decoration-none">doi:10.5194/essd-16-1933-2024</a></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">v3.1N</td>
+                                    <td>2026</td>
+                                    <td>903 entities, 29 relational tables</td>
+                                    <td>Integration with Neotoma, improved QC, git-based workflow for periodic updates</td>
+                                    <td>Endres et al. (In prep.)</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
+                    <p class="text-muted small mb-4 text-center"><em><strong>Table S1.</strong> Published versions of the SISAL database.</em></p>
+
+                    <p class="text-muted text-justify mb-2">Related publications:</p>
+                    <ul class="text-muted list-unstyled mb-4">
+                        <li class="mb-2">
+                            <i class="bi bi-journal-text text-primary me-2"></i>
+                            Williams, J. W., Kaufman, D., Newton, A., and Von Gunten, L. (2018), Building open data: Data stewards and community-curated data resources,
+                            <em>Past Global Changes Mag.</em>, 26, 50-51,
+                            <a href="https://doi.org/10.22498/pages.26.2.50" target="_blank" class="text-decoration-none">doi:10.22498/pages.26.2.50</a>
+                        </li>
+                    </ul>
+
+                    <h5 class="mb-3 border-bottom pb-2">From Static Releases to a Living Data System</h5>
+                    <p class="text-muted text-justify">
+                        Like many working-group databases, SISAL was initially published as a series of static versions. Each release required
+                        substantial volunteer effort by a small group of data stewards and supporting scientists, who had to curate the data
+                        and maintain the supporting data services at the same time. This slowed the release cadence and increased the latency
+                        between newly published speleothem research and its availability in the database.
+                    </p>
+                    <p class="text-muted text-justify mb-4">
+                        SISALv3.1N addresses these needs by reducing the latency between published research and the database, lowering the workload of 
+                        data stewards, providing clearer pathways for researchers to contribute, and integrating SISAL with the wider paleo-data ecosystem. 
+                        The data schemas were aligned and the data were imported into Neotoma with its bulk-upload system (DataBUS). The live database is 
+                        maintained in a public GitHub repository 
+                        (<a href="https://github.com/SISALdb/SISALdb" target="_blank" class="text-decoration-none">SISALdb/SISALdb</a>).
+                    </p>
+
+                    <h5 class="mb-3 border-bottom pb-2">Database Structure</h5>
+                    <p class="text-muted text-justify">
+                        SISAL is a relational database (<a href="about.html#figure-s1" class="text-decoration-none">Figure S1</a>). 
+                        Its core unit is the <code>entity</code>: a single speleothem specimen from which a consistent dataset originates. 
+                        The <code>entity</code> table holds rich metadata and is linked upwards to the cave <code>site</code> and to the publications 
+                        (<code>reference</code>), and downwards, via the <code>entity_id</code>, to the <code>dating</code> and <code>sample</code> tables. 
+                        Each sample represents one geochemical measurement (δ<sup>18</sup>O, δ<sup>13</sup>C, or a trace-element ratio such as
+                        Mg/Ca, Sr/Ca, Ba/Ca, U/Ca, P/Ca or the Sr isotopes) and is positioned by its depth from the top of the specimen. Chronologies are
+                        attached to the individual samples: both the original author age model and the standardised SISAL age models are stored.
+                        Hiatuses and growth gaps, laminae counts and the composite records assembled from several entities are modelled in dedicated tables.
+                    </p>
+                    <p class="text-muted text-justify">
+                        The data model of SISALv3.1N was extended to support the living-database workflow. Additional tables record people, projects,
+                        database releases and code versions, so that the contribution of each person to a specific release or science project is explicit and the
+                        age-model and QC pipeline that produced a release is documented.
+                    </p>
+                    <figure class="mb-4" id="figure-s1">
+                        <a href="img/sisal_database_schema.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                            <img src="img/sisal_database_schema.png" class="img-fluid border rounded-3 bg-white w-75 mx-auto d-block" alt="Relational schema of the SISAL database">
+                        </a>
+                        <figcaption class="text-muted small mt-2 text-center">
+                            <em><strong>Figure S1.</strong> Relational structure of the SISAL database, centred on the entity table. Dashed arrows indicate
+                            many-to-one, solid arrows one-to-one relationships; (*) marks fields that are optional.</em>
+                        </figcaption>
+                    </figure>
+
+                    <h5 class="mb-3 border-bottom pb-2">Database Update Workflow</h5>
+                    <p class="text-muted text-justify">
+                        New records enter SISAL through a standardised submission workbook, available as an Excel template in the
+                        <a href="https://github.com/SISALdb/submission_v15" target="_blank" class="text-decoration-none">SISALdb/submission_v15</a> repository.
+                        Data can be submitted by the author of the original study or by an independent data contributor, for example a regional coordinator.
+                    </p>
+                    <p class="text-muted text-justify">
+                        The workflow (<a href="about.html#figure-s2" class="text-decoration-none">Figure S2</a>) proceeds as follows. 
+                        The contributor fills out the submission workbook and checks it with the automated QC, which is available through 
+                        the SISAL Web Submit application described in the next chapter. The workbook and the QC report are then
+                        passed to a SISAL data steward, who checks the data visually and adds the record to the live database on GitHub. 
+                        Standardised SISAL age models and site-level products (such as karst lithology and land cover) are added for every new or modified entity. 
+                        Periodically, every 6-12 months a release is created, archived on Zenodo with a minted DOI, and the changes are transferred to Neotoma
+                        via its bulk-upload system. Contributor files are never edited. Every received version is archived unchanged, and all data-steward 
+                        corrections are made in derived copies with a cell-level change log.
+                    </p>
+                    <figure class="mb-4" id="figure-s2">
+                        <a href="img/sisal_update_workflow.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                            <img src="img/sisal_update_workflow.png" class="img-fluid border rounded-3 bg-white w-75 mx-auto d-block" alt="Workflow of submitting and releasing SISAL data">
+                        </a>
+                        <figcaption class="text-muted small mt-2 text-center">
+                            <em><strong>Figure S2.</strong> Revised community workflow for submitting data to and releasing data from SISAL: submission workbook,
+                            automated QC, data-steward validation, periodic release (GitHub, Zenodo) and transfer to Neotoma.</em>
+                        </figcaption>
+                    </figure>
+
+                    <h5 class="mb-3 border-bottom pb-2">SISAL Community</h5>
+                    <p class="text-muted text-justify">
+                        SISAL has been community-driven from the start. An initial workshop in 2017 led to a regional-coordinator framework, in which
+                        researchers working in the different parts of the world took responsibility for curating the records of their regions, supported
+                        by automated and manual quality checks. The community was incentivised through authorship on the database papers and through open
+                        invitations to work on SISAL science projects. In the current model, the dependence on a team of more than 30 regional coordinators for data
+                        entry and quality checks is reduced: a small number of rotating <strong>data stewards</strong> curate and release the data, while
+                        contributors are supported by freely accessible infrastructure for data entry and validation.
+                    </p>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3 h-100">
+                                <h6 class="fw-bold text-primary"><i class="bi bi-database-check me-2"></i>Data Stewards</h6>
+                                <p class="text-muted small mb-0">
+                                    Check submitted workbooks, add new entities to the live database, compute the standardised age models and
+                                    prepare the periodic releases. Responsibility for the next release is shared between two stewards.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3 h-100">
+                                <h6 class="fw-bold text-primary"><i class="bi bi-pin-map me-2"></i>Regional Coordinators</h6>
+                                <p class="text-muted small mb-0">
+                                    Researchers who represent a geographic region, compile and curate records from publications of that region, and
+                                    submit them as data contributors.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-muted text-justify">
+                        To make individual contributions visible, SISALv3.1N introduces contributor roles that can be assigned for a database
+                        release or for a science project (<a href="about.html#table-s2" class="text-decoration-none">Table S2</a>). 
+                        Two roles can submit data: the <strong>author</strong> of a publication that generated speleothem
+                        data, and a <strong>data contributor</strong> who fills out the submission workbook on the basis of an existing publication.
+                    </p>
+                    <div class="table-responsive mb-2" id="table-s2">
+                        <table class="table table-sm table-bordered align-middle small mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Role</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-muted">
+                                <tr>
+                                    <td class="fw-bold">release_steward</td>
+                                    <td>Owns a specific release: merges submissions, runs the age models and produces the release.</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">data_curator</td>
+                                    <td>Reviews and corrects the data going into a release (coordinate fixes, vocabulary and metadata QC, flagged issues).</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">workflow_developer</td>
+                                    <td>Builds or maintains the pipelines and tooling used to produce a release (QC scripts, age-model pipeline, SQL generation).</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">project_lead</td>
+                                    <td>Leads a thematic science project that feeds data into one or more releases.</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">data_contributor</td>
+                                    <td>Anyone who contributed underlying data (entities) to a given release or project; derived automatically from the database.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-muted small mb-4 text-center"><em><strong>Table S2.</strong> Contributor and stewardship roles in SISALdb.</em></p>
+
+                    <h5 class="mb-3 border-bottom pb-2">Authors</h5>
+                    <p class="text-muted text-justify">
+                        The SISAL-Neotoma workflow and the SISALv3N+ living database are described in a manuscript in preparation.
+                        The author list given in the current manuscript draft are:
+                    </p>
+                    <p class="text-muted text-justify small">
+                        Laura Endres<sup>1</sup>, Nikita Kaushal<sup>2</sup>, Socorro Dominguez<sup>3</sup>, John W. Williams<sup>3</sup>, Simon Goring<sup>3</sup>,
+                        Jens Fohlmeister<sup>4</sup>, Franziska Lechleitner<sup>5</sup>, István Gábor Hatvani<sup>6,7,8</sup>,
+                        Gergő Rabi-Nagy<sup>6,7</sup>, Zoltán Kern<sup>6,7</sup>, Heather Stoll<sup>1</sup>, Emmanuel Pestalozzi, Sandra Bernegger
+                        and the SISAL working group members.
+                    </p>
+                    <ol class="text-muted small mb-4">
+                        <li>Department of Earth and Planetary Sciences (EAPS), ETH Zürich, Zürich, Switzerland</li>
+                        <li>American Museum of Natural History, New York, NY, USA</li>
+                        <li>Department of Geography and Center for Climatic Research, University of Wisconsin-Madison, Madison, WI, USA</li>
+                        <li>GFZ German Research Centre for Geosciences, Potsdam, Germany</li>
+                        <li>Swiss Federal Institute for Forest, Snow and Landscape Research WSL, Birmensdorf, Switzerland</li>
+                        <li>Institute for Geological and Geochemical Research, HUN-REN Research Centre for Astronomy and Earth Sciences, Budapest, Hungary</li>
+                        <li>HUN-REN CSFK, MTA Centre of Excellence, Budapest, Hungary</li>
+                        <li>Institute of Geography and Environmental Sciences, Esterházy Károly University, Eger, Hungary</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- 2. SISAL Web Submit                                          -->
+            <!-- ============================================================ -->
+            <div class="card shadow-sm border-0 rounded-3 mb-5" id="sisal-web-submit">
+                <div class="card-header bg-primary text-white fw-bold d-flex align-items-center py-3 rounded-top card-toggle collapsed" role="button" tabindex="0"
+                     data-bs-toggle="collapse" data-bs-target="#sisal-web-submit-body" aria-expanded="false" aria-controls="sisal-web-submit-body">
+                    <i class="bi bi-cloud-upload-fill me-2 fs-5"></i> SISAL Web Submit
+                    <i class="bi bi-chevron-down ms-auto card-chevron"></i>
+                </div>
+                <div class="card-body collapse p-4 p-md-5" id="sisal-web-submit-body">
+
+                    <div class="d-flex mb-3">
+                        <h5 class="mb-0 border-bottom pb-2 flex-grow-1">Overview</h5>
+                        <a href="https://github.com/rabi-nagy-gergo/SISAL_WebSubmit" target="_blank" class="btn btn-outline-dark btn-sm fw-bold ms-3 align-self-start">
+                            <i class="bi bi-github me-1"></i> Project Repository
+                        </a>
+                    </div>
+                    <p class="text-muted text-justify mb-4">
+                        The SISAL database is a critical global resource for paleoclimate reconstructions. However, ensuring the structural integrity 
+                        and scientific accuracy of newly submitted data has historically been a complex bottleneck. The SISAL Web Submit project directly 
+                        addresses this challenge by transforming the previously decentralized, local validation pipeline into a robust, unified web-based 
+                        application. It provides a centralized, user-friendly interface specifically designed to streamline the uploading, auditing, and 
+                        scientific validation of speleothem records. By moving the intricate Quality Control infrastructure to a managed server, the 
+                        application completely eliminates the need for contributors to set up local environments, resolve software dependencies, or manually 
+                        execute command-line scripts. This transition not only facilitates the submission process, making it highly accessible for researchers 
+                        across all technical backgrounds, but also guarantees that every dataset is evaluated against a standardized set of rules before reaching 
+                        the database managers.
+                    </p>
+
+                    <div class="card border-primary border-0 bg-primary bg-opacity-10 rounded-3 p-4 mb-4">
+                        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                            <div>
+                                <h6 class="fw-bold text-primary mb-1 d-flex align-items-center">
+                                    <i class="bi bi-journal-bookmark-fill me-2 fs-5"></i>Step-by-Step Submission Tutorial
+                                </h6>
+                                <p class="text-muted small mb-0 text-justify">
+                                    Are you a first-time data contributor or looking for a detailed guide? Explore our interactive tutorial for comprehensive, 
+                                    step-by-step instructions, practical tips, and visual examples covering the entire submission workflow.
+                                </p>
+                            </div>
+                            <a href="tutorial.html" class="btn btn-primary fw-bold text-nowrap px-4 py-2 align-self-start align-self-md-center">
+                                <i class="bi bi-book-half me-2"></i>Open Tutorial
+                            </a>
+                        </div>
+                    </div>
+
+                    <h5 class="mb-3 border-bottom pb-2">Motivation for a Web-Based Transition</h5>
+                    <p class="text-muted text-justify">
+                        Historically, the data submission process relied on manual script execution on local machines 
+                        (<a href="about.html#figure-s3" class="text-decoration-none">Figure S3</a>). Contributors filled out Excel workbooks 
+                        and submitted them through regional coordinators, after which automated Quality Control (QC) scripts and expert 
+                        assessments were run iteratively. This setup required users to manually configure directory hierarchies and install 
+                        complex Python and R environments, often leading to software dependency conflicts. Furthermore, executing scripts locally 
+                        introduced version-control risks and relied on a command-line interface that was difficult for non-technical users to troubleshoot.
+                    </p>
+                    <figure class="mb-4" id="figure-s3">
+                        <a href="img/local_pipeline.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                            <img src="img/local_pipeline.png" class="img-fluid border rounded-3 bg-white w-50 mx-auto d-block" alt="Legacy SISAL submission pipeline">
+                        </a>
+                        <figcaption class="text-muted small mt-2 text-center">
+                            <em><strong>Figure S3.</strong> Legacy SISAL submission and validation pipeline 
+                                relying on regional coordinators and local script execution.</em>
+                        </figcaption>
+                    </figure>
+                    <p class="text-muted text-justify mb-4">
+                        By transitioning to a centralized web application, the validation process runs on a managed server environment. 
+                        This guarantees strict version control ensuring every submission is validated against the exact same rules and 
+                        replaces terminal execution with a user-friendly browser interface.
+                    </p>
+
+                    <h5 class="mb-3 border-bottom pb-2">Benefits for the Community</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3 h-100">
+                                <h6 class="fw-bold text-primary"><i class="bi bi-person-up me-2"></i>Data Contributors</h6>
+                                <p class="text-muted small mb-0">
+                                    Eliminates local environment configuration and terminal command usage. Provides clear, structured, 
+                                    step-by-step diagnostic feedback directly in the browser to resolve workbook formatting issues easily.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3 h-100">
+                                <h6 class="fw-bold text-primary"><i class="bi bi-shield-check me-2"></i>Data Stewards</h6>
+                                <p class="text-muted small mb-0">
+                                    Ensures high data quality without manual auditing overhead. Receiving standardized, pre-validated submission 
+                                    packages with pre-generated plots significantly accelerates database curation and release cycles.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <p class="text-muted text-justify">
+                                Future development phases may aim to eliminate the manual step of emailing the final <code>.zip</code> archive 
+                                to database managers. Planned enhancements include an SMTP-based forwarding system that automatically securely 
+                                sends the validated data payload to the Data Stewards. Furthermore, advanced integration could allow the application 
+                                to automatically open a GitHub Pull Request containing pre-generated SQL/CSV extracts and embedded plots, centralizing 
+                                the curation workflow and drastically simplifying future database updates.
+                            </p>
+                        </div>
+                    </div>
+
+                    <h5 class="mb-3 border-bottom pb-2">Submission Workflow Overview</h5>
+                    <p class="text-muted text-justify mb-3">
+                        The updated submission workflow (<a href="about.html#figure-s4" class="text-decoration-none">Figure S4</a>) 
+                        is designed as a simple, step-by-step process. Contributors are guided through the following four stages:
+                    </p>
+                    <div class="list-group mb-4">
+                        <div class="list-group-item border-0 px-0 py-2 text-muted">
+                            <h6 class="fw-bold text-dark mb-1"><i class="bi bi-1-circle-fill text-primary me-2"></i>Stage 1: Upload</h6>
+                            <p class="mb-0 text-justify">
+                                The contributor selects and uploads their completed SISAL v15 Excel workbook via a secure web form. 
+                                A quick CAPTCHA verification ensures the system remains protected from automated bots.
+                            </p>
+                        </div>
+                        <div class="list-group-item border-0 px-0 py-2 text-muted">
+                            <h6 class="fw-bold text-dark mb-1"><i class="bi bi-2-circle-fill text-primary me-2"></i>Stage 2: Validation</h6>
+                            <p class="mb-0 text-justify">
+                                The application runs automated structural and scientific checks on the data. The contributor can monitor 
+                                the progress and then review a clear, categorized diagnostic summary (Informative, Warnings, Errors) 
+                                directly in the browser. If no critical errors are found, the submission is accepted as valid and can proceed.
+                            </p>
+                        </div>
+                        <div class="list-group-item border-0 px-0 py-2 text-muted">
+                            <h6 class="fw-bold text-dark mb-1"><i class="bi bi-3-circle-fill text-primary me-2"></i>Stage 3: Plotting</h6>
+                            <p class="mb-0 text-justify">
+                                The application automatically generates age models, potential hiatuses, and proxy time-series graphs based on 
+                                the validated data. The contributor can visually inspect these plots directly on the webpage to ensure the data 
+                                is represented correctly.
+                            </p>
+                        </div>
+                        <div class="list-group-item border-0 px-0 py-2 text-muted">
+                            <h6 class="fw-bold text-dark mb-1"><i class="bi bi-4-circle-fill text-primary me-2"></i>Stage 4: Download and Finalization</h6>
+                            <p class="mb-0 text-justify">
+                                The contributor downloads a single <code>.zip</code> package containing the QC-passed workbook, a compiled PDF of all 
+                                generated plots, a regional site map, and a detailed human-readable diagnostic report. Finally, the user forwards this 
+                                complete package to the SISAL Data Stewards.
+                            </p>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-dark mb-2">Enhanced Scientific Validation: U-Th Credibility Check</h6>
+                    <p class="text-muted text-justify mb-4">
+                        Coinciding with the transition to a web-based architecture, the validation stage was significantly expanded with a new 
+                        scientific assessment: the U-Th age credibility check. This methodology independently recalculates U-Th ages directly 
+                        from the submitted isotope ratios and concentrations, subsequently comparing these calculated values against the corrected 
+                        and uncorrected ages reported by the authors. This independent verification is highly beneficial for the scientific community, 
+                        as it automatically identifies hidden data-entry anomalies such as mistakenly submitting atomic ratios instead of activity 
+                        ratios, or utilizing mismatched decay constants. By integrating this automated safeguard, the reliability and consistency 
+                        of the geochronological data entering the SISAL database are substantially improved.
+                    </p>
+
+                    <figure class="mb-0" id="figure-s4">
+                        <a href="img/web_pipeline.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                            <img src="img/web_pipeline.png" class="img-fluid border rounded-3 bg-white w-75 mx-auto d-block" alt="Updated web-based submission pipeline">
+                        </a>
+                        <figcaption class="text-muted small mt-2 text-center">
+                            <em><strong>Figure S4.</strong> Modern web-based submission pipeline separating automated online quality control from 
+                                data-steward merging and Neotoma integration.</em>
+                        </figcaption>
+                    </figure>
+
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- 3. Software Architecture                                     -->
+            <!-- ============================================================ -->
+            <div class="card shadow-sm border-0 rounded-3 mb-5" id="software-architecture">
+                <div class="card-header bg-primary text-white fw-bold d-flex align-items-center py-3 rounded-top card-toggle collapsed" role="button" tabindex="0"
+                     data-bs-toggle="collapse" data-bs-target="#software-architecture-body" aria-expanded="false" aria-controls="software-architecture-body">
+                    <i class="bi bi-diagram-3-fill me-2 fs-5"></i> Software Architecture
+                    <i class="bi bi-chevron-down ms-auto card-chevron"></i>
+                </div>
+                <div class="card-body collapse p-4 p-md-5" id="software-architecture-body">
+
+                    <div class="d-flex mb-3">
+                        <h5 class="mb-0 border-bottom pb-2 flex-grow-1">Overview</h5>
+                        <a href="https://github.com/rabi-nagy-gergo/SISAL_WebSubmit" target="_blank" class="btn btn-outline-dark btn-sm fw-bold ms-3 align-self-start">
+                            <i class="bi bi-github me-1"></i> Project Repository
+                        </a>
+                    </div>
+                    <p class="text-muted text-justify">
+                        The SISAL Web Submit application is built on a modern, decoupled web architecture designed for modularity, statelessness, and high 
+                        execution safety. The frontend provides a clean, responsive user interface built with HTML5, Bootstrap 5, and vanilla JavaScript, 
+                        while the backend is powered by Python and the high-performance FastAPI framework. Because the application is strictly stateless, 
+                        session management and temporary data isolation are handled directly on the server's file system by creating isolated working 
+                        directories for each upload session.
+                    </p>
+                    <p class="text-muted text-justify mb-4">
+                        To achieve a clear separation of concerns, the backend logic is partitioned into dedicated single-responsibility modules covering 
+                        file ingestion, scientific validation, age-model and proxy plotting, and download bundle finalization. Legacy QC Python scripts and 
+                        R visualization pipelines are executed as asynchronous subprocesses. Real-time feedback is streamed directly to the frontend using 
+                        JSON status objects and diagnostic logs, eliminating the need for complex database overhead while preserving full system responsiveness.
+                    </p>
+
+                    <h5 class="mb-3 border-bottom pb-2">Technology Stack</h5>
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        <span class="badge bg-primary p-2 fs-7">Python 3.10+</span>
+                        <span class="badge bg-success p-2 fs-7">FastAPI</span>
+                        <span class="badge bg-dark p-2 fs-7">Uvicorn</span>
+                        <span class="badge bg-info text-dark p-2 fs-7">R 4.x</span>
+                        <span class="badge bg-warning text-dark p-2 fs-7">Vanilla JS & HTML5</span>
+                        <span class="badge bg-secondary p-2 fs-7">Bootstrap 5</span>
+                        <span class="badge bg-danger p-2 fs-7">Docker</span>
+                    </div>
+
+                    <h5 class="mb-3 border-bottom pb-2">Software Dependencies and Packages</h5>
+                    <p class="text-muted text-justify mb-2">
+                        The core web application, alongside its embedded validation and plotting 
+                        engines, relies on a curated set of open-source Python and R packages:
+                    </p>
+                    <ul class="text-muted mb-4">
+                        <li class="mb-3">
+                            <strong class="text-dark">Web Framework:</strong>
+                            <ul class="mt-2">
+                                <li class="mb-1"><code>FastAPI</code>: RESTful routing and asynchronous responses</li>
+                                <li class="mb-1"><code>Uvicorn</code>: ASGI web server</li>
+                                <li class="mb-1"><code>Pydantic</code>: data parsing and validation schemas</li>
+                                <li class="mb-1"><code>python-multipart</code>: file upload handling</li>
+                            </ul>
+                        </li>
+                        <li class="mb-3">
+                            <strong class="text-dark">Python Scientific and Data Processing Stack:</strong>
+                            <ul class="mt-2">
+                                <li class="mb-1"><code>pandas</code>: Excel table parsing and structured data manipulation</li>
+                                <li class="mb-1"><code>numpy</code> & <code>scipy</code>: numerical routines and root-finding algorithms</li>
+                                <li class="mb-1"><code>openpyxl</code>: workbook inspection</li>
+                                <li class="mb-1"><code>matplotlib</code> & <code>cartopy</code>: regional site map rendering</li>
+                                <li class="mb-1"><code>shapely</code>: spatial geometric validation</li>
+                            </ul>
+                        </li>
+                        <li class="mb-3">
+                            <strong class="text-dark">R Visualization Process:</strong>
+                            <ul class="mt-2">
+                                <li class="mb-1"><code>ggplot2</code>: rendering time-series and age-model graphs</li>
+                                <li class="mb-1"><code>gridExtra</code> & <code>ggpubr</code>: multi-panel plot arrangement</li>
+                                <li class="mb-1"><code>readxl</code>: ingesting validated Excel data</li>
+                                <li class="mb-1"><code>dplyr</code>: data transformation for plotting routines</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h5 class="mb-3 border-bottom pb-2">Execution Flowchart</h5>
+                    <p class="text-muted text-justify mb-3">
+                        The execution flowchart (<a href="about.html#figure-s5" class="text-decoration-none">Figure S5</a>) details 
+                        the step-by-step lifecycle of a session, tracing data flow from security ingestion to final archive assembly.
+                    </p>
+                    <figure class="mb-0" id="figure-s5">
+                        <a href="img/flowchart.png" target="_blank" rel="noopener" class="d-block" title="Click to open the image in full size in a new tab">
+                            <img src="img/flowchart.png" class="img-fluid border rounded-3 bg-white w-75 mx-auto d-block" alt="SISAL Web Submit Execution Flowchart">
+                        </a>
+                        <figcaption class="text-muted small mt-2 text-center">
+                            <em><strong>Figure S5.</strong> Process flowchart illustrating data streaming, asynchronous subprocess handling, 
+                                and file state transitions throughout the submission stages.</em>
+                        </figcaption>
+                    </figure>
+
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- 4. Contributors                                              -->
+            <!-- ============================================================ -->
+            <div class="card shadow-sm border-0 rounded-3 mb-4" id="contributors">
+                <div class="card-header bg-primary text-white fw-bold d-flex align-items-center py-3 rounded-top card-toggle collapsed" role="button" tabindex="0"
+                     data-bs-toggle="collapse" data-bs-target="#contributors-body" aria-expanded="false" aria-controls="contributors-body">
+                    <i class="bi bi-people-fill me-2 fs-5"></i> Contributors
+                    <i class="bi bi-chevron-down ms-auto card-chevron"></i>
+                </div>
+                <div class="card-body collapse p-4 p-md-5" id="contributors-body">
+
+                    <p class="text-muted text-justify mb-4">
+                        The SISAL Web Submit project is a collaborative effort bridging modern web engineering with robust paleoclimate data science. 
+                        The application builds upon months of community-driven script development, integrating these scientific tools into a seamless 
+                        online platform.
+                    </p>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-12">
+                            <div class="border rounded-3 p-3 h-100">
+                                <h6 class="fw-bold text-dark mb-1">Gergő Rabi-Nagy<sup>1,2</sup></h6>
+                                <p class="text-primary fw-semibold small mb-2">Web Application & System Architecture</p>
+                                <p class="text-muted small mb-0 text-justify">
+                                    Development of the interactive web application and browser-based validation procedure.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="border rounded-3 p-3 h-100">
+                                <h6 class="fw-bold text-dark mb-1">K. Atsawawaranunt<sup>3</sup>, L. Comas-Bru<sup>3</sup>, E. Pestalozzi<sup>4</sup>, I. Hatvani<sup>1,2,5</sup>, L. Endres<sup>4</sup></h6>
+                                <p class="text-primary fw-semibold small mb-2">Core Validation Pipeline (Python & R Scripts)</p>
+                                <p class="text-muted small mb-0 text-justify">
+                                    Authors of the original local validation workflow, structural/scientific 
+                                    validation scripts and the R-based plotting tools.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="border rounded-3 p-3 h-100">
+                                <h6 class="fw-bold text-dark mb-1">J. Fohlmeister<sup>6</sup></h6>
+                                <p class="text-primary fw-semibold small mb-2">Core Validation Pipeline (Python & R Scripts)</p>
+                                <p class="text-muted small mb-0 text-justify">
+                                    Developer of the original U-Th check logic in Julia (subsequently ported to the Python pipeline).</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <ol class="text-muted small mb-0">
+                        <li>Institute for Geological and Geochemical Research, HUN-REN Research Centre for Astronomy and Earth Sciences, Budapest, Hungary</li>
+                        <li>HUN-REN CSFK, MTA Centre of Excellence, Budapest, Hungary</li>
+                        <li>School of Archaeology, Geography and Environmental Sciences, University of Reading, Reading, UK</li>
+                        <li>Department of Earth and Planetary Sciences (EAPS), ETH Zürich, Zürich, Switzerland</li>
+                        <li>Institute of Geography and Environmental Sciences, Esterházy Károly University, Eger, Hungary</li>
+                        <li>GFZ German Research Centre for Geosciences, Potsdam, Germany</li>
+                    </ol>
+
                 </div>
             </div>
 
@@ -165,26 +682,27 @@
     </div>
 </div>
 
-<!-- LÁBLÉC -->
 <footer class="mt-auto py-2 bg-dark text-light">
     <div class="container d-flex justify-content-between align-items-center small">
-        
+
         <div class="text-start" style="flex: 1;">
             <a href="about.html" class="btn btn-outline-light btn-sm">About this project</a>
         </div>
-        
+
         <div class="text-center" style="flex: 1;">
             &copy; 2026 SISAL Web Submit<br>
             <span class="text-white-50">For v15.0 excel workbooks</span>
         </div>
-        
+
         <div class="text-end" style="flex: 1;">
             Developed by: <strong>Gergő Rabi-Nagy</strong>
         </div>
-        
+
     </div>
-</footer>    
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/shared.js?v={{ app_version }}"></script>
+<script src="js/about.js?v={{ app_version }}"></script>
 </body>
 </html>
